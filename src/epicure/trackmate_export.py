@@ -144,6 +144,8 @@ def build_all_spots_tag(df_spots, roi_n_points):
                 "POSITION_T": str(spot["POSITION_T"]),
                 "FRAME": str(spot["FRAME"]),
                 "VISIBILITY": str(spot["VISIBILITY"]),
+                # "RADIUS": "1",
+                "MANUAL_SPOT_COLOR": "0",  # TODO: use i to store group
             }
 
             # Add ROI contour if available.
