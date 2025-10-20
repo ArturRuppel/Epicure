@@ -20,6 +20,7 @@ import epicure.Utils as ut
 SPOT_FEATS = [
     {"feature": "POSITION_X", "name": "X", "shortname": "X", "dimension": "POSITION", "isint": "false"},
     {"feature": "POSITION_Y", "name": "Y", "shortname": "Y", "dimension": "POSITION", "isint": "false"},
+    {"feature": "POSITION_Z", "name": "Z", "shortname": "Z", "dimension": "POSITION", "isint": "false"},
     {"feature": "POSITION_T", "name": "T", "shortname": "T", "dimension": "TIME", "isint": "false"},
     {"feature": "FRAME", "name": "Frame", "shortname": "Frame", "dimension": "NONE", "isint": "true"},
     {"feature": "VISIBILITY", "name": "Visibility", "shortname": "Visibility", "dimension": "NONE", "isint": "true"},
@@ -59,6 +60,7 @@ def build_spots_df(epic):
     df_spots["name"] = df_spots.apply(lambda row: f"LABEL{row['label']}_FRAME{row['FRAME']}", axis=1)
     df_spots["POSITION_X"] = df_spots["pos_x"] * epic.epi_metadata.get("ScaleXY", 1)
     df_spots["POSITION_Y"] = df_spots["pos_y"] * epic.epi_metadata.get("ScaleXY", 1)
+    df_spots["POSITION_Z"] = 0.0  # 2D data. TODO: handle 3D data.
     df_spots["POSITION_T"] = df_spots["FRAME"] * epic.epi_metadata.get("ScaleT", 1)
     df_spots["VISIBILITY"] = 1
     df_spots.drop(columns=["pos_x", "pos_y"], inplace=True)
@@ -138,6 +140,7 @@ def build_all_spots_tag(df_spots, roi_n_points):
                 "EpiCure_label": str(spot["label"]),
                 "POSITION_X": str(spot["POSITION_X"]),
                 "POSITION_Y": str(spot["POSITION_Y"]),
+                "POSITION_Z": str(spot["POSITION_Z"]),
                 "POSITION_T": str(spot["POSITION_T"]),
                 "FRAME": str(spot["FRAME"]),
                 "VISIBILITY": str(spot["VISIBILITY"]),
@@ -308,7 +311,7 @@ def build_settings_tag(epic):
         "ImageData",
         {
             "filename": img_path.name,
-            "folder": str(img_path.parent),
+            "folder": str(img_path.parent),  # TODO: missing / at the end compared to TM, is it an issue?
             "width": str(epic.imgshape2D[1]),
             "height": str(epic.imgshape2D[0]),
             "nslices": "1",
