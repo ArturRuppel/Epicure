@@ -24,6 +24,7 @@ SPOT_FEATS = [
     {"feature": "POSITION_T", "name": "T", "shortname": "T", "dimension": "TIME", "isint": "false"},
     {"feature": "FRAME", "name": "Frame", "shortname": "Frame", "dimension": "NONE", "isint": "true"},
     {"feature": "VISIBILITY", "name": "Visibility", "shortname": "Visibility", "dimension": "NONE", "isint": "true"},
+    {"feature": "RADIUS", "name": "Radius", "shortname": "R", "dimension": "LENGTH", "isint": "false"},
     {"feature": "MANUAL_SPOT_COLOR", "name": "Manual spot color", "shortname": "Spot color", "dimension": "NONE", "isint": "true"},
 ]
 
@@ -106,8 +107,8 @@ def build_roi_contours(epic, df_spots):
     """Build a mapping from spot ID to its ROI contour."""
     roi_contours = {}
     seg_layer = epic.outputing.seglayer.data
-    print(type(seg_layer))
-    print(seg_layer.shape)
+    # print(type(seg_layer))
+    # print(seg_layer.shape)
     for _, spot in df_spots.iterrows():
         contour = get_cell_contour(seg_layer, spot["label"], spot["FRAME"])
         if contour is not None:
@@ -121,7 +122,7 @@ def build_roi_contours(epic, df_spots):
             # Flatten contour to a 1D array as expected by TrackMate.
             contour = contour.flatten()
             roi_contours[spot["ID"]] = contour
-            print(spot["ID"], spot["label"], spot["FRAME"], contour.shape)
+            # print(spot["ID"], spot["label"], spot["FRAME"], contour.shape)
     return roi_contours
 
 
@@ -129,7 +130,7 @@ def build_all_spots_tag(df_spots, roi_n_points):
     """Build the AllSpots tag for TrackMate XML."""
     all_spots = ET.Element("AllSpots", {"nspots": str(len(df_spots))})
     frames = df_spots["FRAME"].unique()
-    print(roi_n_points)
+    # print(roi_n_points)
     for frame in frames:
         spots_in_frame = df_spots[df_spots["FRAME"] == frame]
         frame_tag = ET.SubElement(all_spots, "SpotsInFrame", {"frame": str(frame)})
@@ -144,8 +145,8 @@ def build_all_spots_tag(df_spots, roi_n_points):
                 "POSITION_T": str(spot["POSITION_T"]),
                 "FRAME": str(spot["FRAME"]),
                 "VISIBILITY": str(spot["VISIBILITY"]),
-                # "RADIUS": "1",
-                "MANUAL_SPOT_COLOR": "0",  # TODO: use i to store group
+                "RADIUS": "1",
+                "MANUAL_SPOT_COLOR": "0",  # TODO: use it to store group
             }
 
             # Add ROI contour if available.
@@ -196,8 +197,11 @@ def create_label_to_track_mapping(divisions: Dict[int, List[int]], unique_labels
 
 def build_all_tracks_data(epic, df_spots):
     """"""
-    divisions = epic.tracking.graph  # dict of {daughter: mother}
+    divisions = epic.tracking.graph  # dict of {daughter: mothers}
     print(f"Divisions: {divisions}")
+    for mothers in divisions.values():
+        if len(mothers) > 1:
+            print("FUSION")
 
     # Generate and assign TRACK_IDs.
     labels = df_spots["label"].unique()
@@ -229,14 +233,16 @@ def build_all_tracks_data(epic, df_spots):
         df_edges["TRACK_ID"] = df_edges["mother"].map(label_to_track_id)
         df_edges.drop(columns=["daughter", "mother"], inplace=True)
 
-    # Non-division edges: for each track, connect consecutive spots.
+    # Non-division edges: for each label, connect consecutive spots within that label.
     non_division_edges = []
-    for track_id in df_spots["TRACK_ID"].unique():
-        track_spots = df_spots[df_spots["TRACK_ID"] == track_id].sort_values("FRAME")
-        for i in range(len(track_spots) - 1):
-            current_spot = track_spots.iloc[i]
-            next_spot = track_spots.iloc[i + 1]
-            non_division_edges.append({"SPOT_SOURCE_ID": current_spot["ID"], "SPOT_TARGET_ID": next_spot["ID"], "TRACK_ID": track_id})
+    for label in df_spots["label"].unique():
+        label_spots = df_spots[df_spots["label"] == label].sort_values("FRAME")
+        if len(label_spots) > 1:
+            track_id = label_spots.iloc[0]["TRACK_ID"]
+            for i in range(len(label_spots) - 1):
+                current_spot = label_spots.iloc[i]
+                next_spot = label_spots.iloc[i + 1]
+                non_division_edges.append({"SPOT_SOURCE_ID": current_spot["ID"], "SPOT_TARGET_ID": next_spot["ID"], "TRACK_ID": track_id})
 
     # Combine division and non-division edges.
     df_non_division_edges = pd.DataFrame(non_division_edges)
@@ -249,8 +255,6 @@ def build_all_tracks_data(epic, df_spots):
 
     # Final cleanup and type conversion.
     if not df_edges.empty:
-        # Remove duplicate edges (division edges that are also consecutive in time).
-        df_edges = df_edges.drop_duplicates(subset=["SPOT_SOURCE_ID", "SPOT_TARGET_ID"], keep="first")
         # We can have NaN if a label has no mother (appears at first frame)
         # or no daughter (disappears at last frame).
         df_edges.dropna(inplace=True)
@@ -265,8 +269,7 @@ def build_all_tracks_data(epic, df_spots):
 def build_all_tracks_tag(df_edges):
     """Build the AllTracks tag for TrackMate XML."""
     all_tracks = ET.Element("AllTracks")
-    track_ids = df_edges["TRACK_ID"].unique()
-    track_ids.sort()
+    track_ids = sorted(df_edges["TRACK_ID"].unique())
     track_id_to_index = {track_id: index for index, track_id in enumerate(track_ids)}
 
     for track_id in track_ids:
@@ -286,6 +289,14 @@ def build_all_tracks_tag(df_edges):
     return all_tracks
 
 
+def build_filtered_tracks_tag(track_ids):
+    """Build the FilteredTracks tag for TrackMate XML."""
+    filtered_tracks = ET.Element("FilteredTracks")
+    for track_id in track_ids:
+        ET.SubElement(filtered_tracks, "TrackID", {"TRACK_ID": str(track_id)})
+    return filtered_tracks
+
+
 def build_model_tag(epic):
     """Build the Model tag for TrackMate XML."""
     model = ET.Element("Model")
@@ -299,7 +310,8 @@ def build_model_tag(epic):
     model.append(build_all_spots_tag(df_spots, cell_contours))
     df_edges = build_all_tracks_data(epic, df_spots)
     model.append(build_all_tracks_tag(df_edges))
-    ET.SubElement(model, "FilteredTracks")
+    track_ids = sorted(df_edges["TRACK_ID"].unique())
+    model.append(build_filtered_tracks_tag(track_ids))
 
     return model
 
@@ -324,8 +336,24 @@ def build_settings_tag(epic):
             "timeinterval": str(epic.epi_metadata.get("ScaleT", 1)),
         },
     )
+    ET.SubElement(
+        settings,
+        "BasicSettings",
+        {
+            "xstart": "0",
+            "xend": str(epic.imgshape2D[1] - 1),
+            "ystart": "0",
+            "yend": str(epic.imgshape2D[0] - 1),
+            "zstart": "0",
+            "zend": "0",
+            "tstart": "0",
+            "tend": str(epic.nframes - 1),
+        },
+    )
+    ET.SubElement(settings, "DetectorSettings", {"DETECTOR_NAME": "MANUAL_DETECTOR", "RADIUS": "5"})
     ET.SubElement(settings, "InitialSpotFilter")
     ET.SubElement(settings, "SpotFilterCollection")
+    ET.SubElement(settings, "TrackerSettings", {"TRACKER_NAME": "MANUAL_TRACKER"})
     ET.SubElement(settings, "TrackFilterCollection")
     return settings
 
@@ -355,6 +383,8 @@ def save_trackmate_xml(epic, outname):
     root.append(settings)
     ET.SubElement(root, "GUIState", {"state": "ConfigureViews"})
     ET.SubElement(root, "DisplaySettings")
+    # display_settings = ET.SubElement(root, "DisplaySettings")
+    # display_settings.text = "{'spotDisplayedAsRoi': true}"
     # tree = ET.ElementTree(root)
 
     pretty_xml = pretty_print_xml(root)
