@@ -620,6 +620,7 @@ class EpiCure():
         infile = open(epiname, "rb")
         try:
             epidata = pickle.load( infile )
+            #print(epidata)
             if "EpiMetaData" in epidata.keys():
                 # version of epicure file after Epicure 0.2.0
                 self.read_epidata( epidata )

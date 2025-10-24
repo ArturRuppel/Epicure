@@ -651,6 +651,7 @@ class Editing( QWidget ):
                         shape_lay.refresh()
                         shape_lay.visible = False
                         return
+                    return
         
     def drawing_junction_mode( self ):
         """ Active mouse bindings for manually drawing the junction, and try to fill defined area """
