@@ -562,6 +562,8 @@ class Editing( QWidget ):
         @self.epicure.seglayer.mouse_drag_callbacks.append
         def click(layer, event):
             if event.type == "mouse_press":
+                zoom = self.viewer.camera.zoom ## in case a napari shortcut changes the zoom
+                center = self.viewer.camera.center ## same
                 ## erase cell option
                 if ut.shortcut_click_match( sl["erase"], event ):
                     # single right-click: erase the cell
@@ -570,6 +572,7 @@ class Editing( QWidget ):
                     ## delete also in track data
                     if erased is not None:
                         self.epicure.delete_track( erased, tframe )
+                    ut.reset_view( self.viewer, zoom, center )
                     return
                         
                 merging = ut.shortcut_click_match( sl["merge"], event )
@@ -588,6 +591,7 @@ class Editing( QWidget ):
                     if start_label == 0 or end_label == 0:
                         if self.epicure.verbose > 0:
                             print("One position is not a cell, do nothing")
+                        ut.reset_view( self.viewer, zoom, center )
                         return
 
                     if merging:
@@ -596,6 +600,7 @@ class Editing( QWidget ):
                             if self.epicure.verbose > 0:
                                 print("Merge cell "+str(start_label)+" with "+str(end_label))
                             self.merge_labels(tframe, start_label, end_label)
+                            ut.reset_view( self.viewer, zoom, center )
                             return
                     
                     if splitting:
@@ -604,9 +609,11 @@ class Editing( QWidget ):
                             if self.epicure.verbose > 0:
                                 print("Split cell "+str(start_label))
                             self.split_label(tframe, start_label, start_pos, end_pos)
+                            ut.reset_view( self.viewer, zoom, center )
                         else:
                             if self.epicure.verbose > 0:
                                 print("Not the same cell already, do nothing")
+                    ut.reset_view( self.viewer, zoom, center )
                     return
 
                 drawing_split = ut.shortcut_click_match( sl["split draw"], event )
@@ -641,6 +648,7 @@ class Editing( QWidget ):
                         shape_lay.data = []
                         shape_lay.refresh()
                         shape_lay.visible = False
+                        ut.reset_view( self.viewer, zoom, center )
                         return
                     if drawing_split:
                         ## split labels along the drawn line
@@ -650,7 +658,9 @@ class Editing( QWidget ):
                         shape_lay.data = []
                         shape_lay.refresh()
                         shape_lay.visible = False
+                        ut.reset_view( self.viewer, zoom, center )
                         return
+                    ut.reset_view( self.viewer, zoom, center )
                     return
         
     def drawing_junction_mode( self ):

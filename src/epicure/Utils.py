@@ -181,6 +181,11 @@ def set_frame(viewer, frame, scale=1):
     """ Set current frame """
     viewer.dims.set_point(0, frame*scale)
 
+def reset_view( viewer, zoom, center ):
+    """ Reset the view to given camera center and zoom """
+    viewer.camera.center = center
+    viewer.camera.zoom = zoom
+
 def set_active_layer(viewer, layname):
     """ Set the current Napari active layer """
     if layname in viewer.layers:
