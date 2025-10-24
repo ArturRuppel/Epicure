@@ -59,8 +59,9 @@ def build_spots_df(epic):
     df_spots = pd.DataFrame(epic.tracking.track_data, columns=["label", "FRAME", "pos_x", "pos_y"])
     df_spots["ID"] = df_spots.index
     df_spots["name"] = df_spots.apply(lambda row: f"LABEL{row['label']}_FRAME{row['FRAME']}", axis=1)
-    df_spots["POSITION_X"] = df_spots["pos_x"] * epic.epi_metadata.get("ScaleXY", 1)
-    df_spots["POSITION_Y"] = df_spots["pos_y"] * epic.epi_metadata.get("ScaleXY", 1)
+    # Invert X and Y to match TrackMate convention.
+    df_spots["POSITION_X"] = df_spots["pos_y"] * epic.epi_metadata.get("ScaleXY", 1)
+    df_spots["POSITION_Y"] = df_spots["pos_x"] * epic.epi_metadata.get("ScaleXY", 1)
     df_spots["POSITION_Z"] = 0.0  # 2D data. TODO: handle 3D data.
     df_spots["POSITION_T"] = df_spots["FRAME"] * epic.epi_metadata.get("ScaleT", 1)
     df_spots["VISIBILITY"] = 1
