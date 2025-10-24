@@ -196,9 +196,8 @@ def create_label_to_track_mapping(divisions: Dict[int, List[int]], unique_labels
     return label_to_track_id
 
 
-def build_all_tracks_data(epic, df_spots):
+def build_all_tracks_data(divisions, df_spots):
     """"""
-    divisions = epic.tracking.graph  # dict of {daughter: mothers}
     print(f"Divisions: {divisions}")
     for mothers in divisions.values():
         if len(mothers) > 1:
@@ -309,10 +308,15 @@ def build_model_tag(epic):
     df_spots = build_spots_df(epic)
     cell_contours = build_roi_contours(epic, df_spots)
     model.append(build_all_spots_tag(df_spots, cell_contours))
-    df_edges = build_all_tracks_data(epic, df_spots)
-    model.append(build_all_tracks_tag(df_edges))
-    track_ids = sorted(df_edges["TRACK_ID"].unique())
-    model.append(build_filtered_tracks_tag(track_ids))
+    divisions = epic.tracking.graph  # dict of {daughter: mothers}
+    if divisions:
+        df_edges = build_all_tracks_data(divisions, df_spots)
+        model.append(build_all_tracks_tag(df_edges))
+        track_ids = sorted(df_edges["TRACK_ID"].unique())
+        model.append(build_filtered_tracks_tag(track_ids))
+    else:
+        model.append(ET.Element("AllTracks"))
+        model.append(ET.Element("FilteredTracks"))
 
     return model
 
@@ -374,6 +378,13 @@ def pretty_print_xml(element):
 
 def save_trackmate_xml(epic, outname):
     """Save a TrackMate XML file."""
+    if epic.verbose == 3:
+        ut.show_info(f"ScaleXY: {epic.epi_metadata.get('ScaleXY')}")
+        ut.show_info(f"ScaleT: {epic.epi_metadata.get('ScaleT')}")
+        ut.show_info(f"imgshape2D: {epic.epi_metadata.get('imgshape2D')}")
+        ut.show_info(f"UnitXY: {epic.epi_metadata.get('UnitXY')}")
+        ut.show_info(f"UnitT: {epic.epi_metadata.get('UnitT')}")
+
     root = ET.Element("TrackMate", {"version": "unknown"})
     log = ET.SubElement(root, "Log")
     now = datetime.now()
