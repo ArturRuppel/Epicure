@@ -115,6 +115,7 @@ def build_roi_contours(epic, df_spots):
         if contour is not None:
             # Convert from pixels to space units.
             # TODO: is ScaleXY the pixel size or the conversion factor?
+            contour = contour.astype(np.float64)  # in case the scale is a float
             contour[:, 0] *= epic.epi_metadata.get("ScaleXY", 1)
             contour[:, 1] *= epic.epi_metadata.get("ScaleXY", 1)
             # Convert contour from absolute to relative coordinates (to the cell XY position).
