@@ -25,6 +25,7 @@ class Editing( QWidget ):
         self.shapelayer_name = "ROIs"
         self.grouplayer_name = "Groups"
         self.updated_labels = None   ## keep which labels are being edited
+        self.seed_active = False ## if place seed option is on
 
         layout = wid.vlayout()
         
@@ -530,9 +531,17 @@ class Editing( QWidget ):
         
         @self.epicure.seglayer.bind_key( sseed["new seed"]["key"], overwrite=True )
         def place_seed(layer):
+            if self.seed_active:
+                ## if option is currently on, stop it
+                self.end_place_seed()
+                return
+            if "Seeds" not in self.viewer.layers:
+                self.create_seedlayer()
+                ut.set_active_layer( self.viewer, "Segmentation" )
             ## desactivate other click-binding
             self.old_mouse_drag = self.epicure.seglayer.mouse_drag_callbacks.copy()
             self.epicure.seglayer.mouse_drag_callbacks = []
+            self.seed_active = True
             ut.show_info("Left-click to place a new seed")
 
             @self.epicure.seglayer.mouse_drag_callbacks.append
@@ -553,6 +562,8 @@ class Editing( QWidget ):
         @self.epicure.seglayer.mouse_drag_callbacks.append
         def click(layer, event):
             if event.type == "mouse_press":
+                zoom = self.viewer.camera.zoom ## in case a napari shortcut changes the zoom
+                center = self.viewer.camera.center ## same
                 ## erase cell option
                 if ut.shortcut_click_match( sl["erase"], event ):
                     # single right-click: erase the cell
@@ -561,6 +572,7 @@ class Editing( QWidget ):
                     ## delete also in track data
                     if erased is not None:
                         self.epicure.delete_track( erased, tframe )
+                    ut.reset_view( self.viewer, zoom, center )
                     return
                         
                 merging = ut.shortcut_click_match( sl["merge"], event )
@@ -579,6 +591,7 @@ class Editing( QWidget ):
                     if start_label == 0 or end_label == 0:
                         if self.epicure.verbose > 0:
                             print("One position is not a cell, do nothing")
+                        ut.reset_view( self.viewer, zoom, center )
                         return
 
                     if merging:
@@ -587,6 +600,7 @@ class Editing( QWidget ):
                             if self.epicure.verbose > 0:
                                 print("Merge cell "+str(start_label)+" with "+str(end_label))
                             self.merge_labels(tframe, start_label, end_label)
+                            ut.reset_view( self.viewer, zoom, center )
                             return
                     
                     if splitting:
@@ -595,9 +609,11 @@ class Editing( QWidget ):
                             if self.epicure.verbose > 0:
                                 print("Split cell "+str(start_label))
                             self.split_label(tframe, start_label, start_pos, end_pos)
+                            ut.reset_view( self.viewer, zoom, center )
                         else:
                             if self.epicure.verbose > 0:
                                 print("Not the same cell already, do nothing")
+                    ut.reset_view( self.viewer, zoom, center )
                     return
 
                 drawing_split = ut.shortcut_click_match( sl["split draw"], event )
@@ -632,6 +648,7 @@ class Editing( QWidget ):
                         shape_lay.data = []
                         shape_lay.refresh()
                         shape_lay.visible = False
+                        ut.reset_view( self.viewer, zoom, center )
                         return
                     if drawing_split:
                         ## split labels along the drawn line
@@ -641,7 +658,10 @@ class Editing( QWidget ):
                         shape_lay.data = []
                         shape_lay.refresh()
                         shape_lay.visible = False
+                        ut.reset_view( self.viewer, zoom, center )
                         return
+                    ut.reset_view( self.viewer, zoom, center )
+                    return
         
     def drawing_junction_mode( self ):
         """ Active mouse bindings for manually drawing the junction, and try to fill defined area """
@@ -1086,7 +1106,11 @@ class Editing( QWidget ):
 
     def create_seedlayer(self):
         pts = []
-        points = self.viewer.add_points( np.array(pts), face_color="blue", size = 7,  edge_width=0, name="Seeds", scale=self.viewer.layers["Segmentation"].scale )
+        ## handle change of parameter name in napari versions
+        if ut.version_napari_above("0.4.19"):
+            self.viewer.add_points( np.array(pts), face_color="blue", size = 7,  border_width=0, name="Seeds", scale=self.viewer.layers["Segmentation"].scale )
+        else:
+            self.viewer.add_points( np.array(pts), face_color="blue", size = 7,  edge_width=0, name="Seeds", scale=self.viewer.layers["Segmentation"].scale )
 
     def reset_seeds(self):
         ut.remove_layer(self.viewer, "Seeds")
@@ -1112,8 +1136,11 @@ class Editing( QWidget ):
         
     def end_place_seed(self):
         """ Finish placing seeds mode """
+        if not self.seed_active:
+            return
         if self.old_mouse_drag is not None:
             self.epicure.seglayer.mouse_drag_callbacks = self.old_mouse_drag
+            self.seed_active = False
             ut.show_info("End seed")
         ut.set_active_layer( self.viewer, "Segmentation" )
 
@@ -1136,6 +1163,7 @@ class Editing( QWidget ):
         if not "Seeds" in self.viewer.layers:
             ut.show_warning("No seeds placed")
             return
+        self.end_place_seed()
         if len(self.viewer.layers["Seeds"].data) <= 0:
             ut.show_warning("No seeds placed")
             return
@@ -1160,7 +1188,8 @@ class Editing( QWidget ):
         self.reset_seeds()
         ## update the list of tracks with the potential new cells
         self.epicure.added_labels_oneframe( tframe, before_seeding, segBB )
-        self.end_place_seed()
+        #self.end_place_seed()
+        ut.set_active_layer( self.viewer, "Segmentation" )
         self.epicure.seglayer.refresh()
 
     def crop_around_seeds( self, tframe ):
@@ -1192,12 +1221,24 @@ class Editing( QWidget ):
         markers[maskBB==0] = -1 ## block filled area 
         ## fill from seeds with diffusion method
         splitted = random_walker( imgBB, labels=markers, beta=700, tol=0.01 )
-        splitted = label(splitted)
-        new_labels = np.unique(markers)
+        new_labels = list(np.unique(markers))
+        new_labels.remove(-1)
+        new_labels.remove(0)
         i = 0
         lablist = set( splitted.flatten() )
+        #print(lablist)
+        #print(new_labels)
         for lab in lablist:
             if lab > 0:
+                mask = (splitted == lab)
+                labels_mask = label(mask)                       
+                ## keep only biggest region if the label is splitted
+                regions = ut.labels_properties(labels_mask)
+                if len(regions) > 2:
+                    regions.sort(key=lambda x: x.area, reverse=True)
+                    if len(regions) > 1:
+                        for rg in regions[1:]:
+                            splitted[rg.coords[:,0], rg.coords[:,1]] = 0
                 splitted[splitted==lab] = new_labels[i]
                 i = i + 1
         segBB[(maskBB>0)*(splitted>0)] = splitted[(maskBB>0)*(splitted>0)]

@@ -16,9 +16,11 @@ from scipy.ndimage import generate_binary_structure as ndi_structure
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
 import tifffile as tif # type: ignore
+import napari
 from napari.utils import progress # type: ignore
 from magicgui.widgets import TextEdit
 from joblib import Parallel, delayed
+from packaging.version import Version
 
 try:
     from skimage.graph import RAG
@@ -45,12 +47,12 @@ def show_debug(message):
 
 def show_documentation():
     import webbrowser
-    webbrowser.open_new_tab("https://gitlab.pasteur.fr/gletort/epicure/-/wikis/Home")
+    webbrowser.open_new_tab("https://gletort.github.io/Epicure/")
     return
 
 def show_documentation_page(page):
     import webbrowser
-    webbrowser.open_new_tab("https://gitlab.pasteur.fr/gletort/epicure/-/wikis/"+page)
+    webbrowser.open_new_tab("https://gletort.github.io/Epicure/"+page)
     return
 
 def show_progress( viewer, show ):
@@ -69,6 +71,11 @@ def close_progress( viewer, progress_bar ):
     """ Close the progress bar """
     progress_bar.close()
     show_progress( viewer, False)
+
+#### Handle versions of napari
+def version_napari_above( compare_version ):
+    """ Compare if the current version of napari is above given version """
+    return Version(napari.__version__) > Version(compare_version)
 
 def get_directory(imagepath):
     return os.path.dirname(imagepath)
@@ -174,6 +181,11 @@ def set_frame(viewer, frame, scale=1):
     """ Set current frame """
     viewer.dims.set_point(0, frame*scale)
 
+def reset_view( viewer, zoom, center ):
+    """ Reset the view to given camera center and zoom """
+    viewer.camera.center = center
+    viewer.camera.zoom = zoom
+
 def set_active_layer(viewer, layname):
     """ Set the current Napari active layer """
     if layname in viewer.layers:
@@ -186,7 +198,11 @@ def set_visibility(viewer, layname, vis):
 
 def remove_layer(viewer, layname):
     if layname in viewer.layers:
-        viewer.layers.remove(layname)
+        try:
+            viewer.layers.remove(layname)
+        except Exception as e:
+            print("Remove of layer incomplete")
+            print(e)
 
 def remove_widget(viewer, widname):
     if widname in viewer.window._dock_widgets:

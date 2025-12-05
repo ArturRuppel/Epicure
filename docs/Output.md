@@ -131,10 +131,35 @@ This option will open an `html` page that contains the table and statistics for 
 ---
 
 ## Measure track features
+_Select "Measure track features" in Output onglet_
 
-Measures, displays and export track features.
+This option allows you to measure and export track related features, as the track length, mean area of the cell along the track...
 
-This option allows you to measure track related features, as the track length, mean area of the cell along the track...
-It displays a table of the measured features of each track. 
+Check the option `Measures in scaled units` to have the results converted in physcial units (µm, min...) or leave it unchecked to have the measures in pixel and frame units.
 
-Options to plot or interact with these measures will be added in the development of EpiCure plugin.
+Select the track that you want to measure with the `Apply on` parameter: only the currently selected cells, all cells or a specific cell group.
+
+Click on `Track features table` to perform the analysis and display a table with the measured features of each track.
+
+![Measure track interface](imgs/output_trackfeature.png)
+
+EpiCure measures standard track/trajectory characteristic and output them in the table, with one row being one track and one column a feature. 
+Here we list the track features currently proposed in EpiCure. 
+
+If you need to measure a feature that is not yet present in this list, you can of course export the raw cell data and measure it in an external program, or add directly the option within EpiCure code and do a pull request to integrate it in the main distribution of EpiCure, or contact us to suggest for us to add it through opening [an issue](https://github.com/gletort/EpiCure/issues), or on the imagesc forum.
+
+???+ example "Track features"
+	
+	| Name  |  Description   |	
+	| ------------ | ------------------------------------ |
+	|Label| Label (indentifying number) of the cell/track that is measured in this row |
+	| TrackDuration|Total duration from the first time point to the last time point of the track|
+	|TrackStart|Time at which the track starts|
+	|TrackEnd|Last time point at which the track is present|
+	|NbGaps|If there are gaps in the track (frames between the first and last one that do not contain the cell), how many are there|
+	|TotalDisplacement| Total distance travelled by the cell in the whole track|
+	|NetDisplacement|Distance between the last point and the first point of the track|
+	|MeanVelocity|Speed of motion of the cell between consecutive frames, averaged over the whole track|
+	|Straightness|How straight is the trajectory: NetDisplacement/TotalDisplacement. A value of 1 means the track is linear (totally straight) while close to 0 the motion is very tortuous|
+	|Group|Group in which the cell Label is classified if any|
+
