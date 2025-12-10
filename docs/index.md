@@ -5,7 +5,7 @@
 You can install EpiCure with pip: `pip install epicure` in a python virtual environment.
 For more precision about the installation, see the [Installation](./Installation.md) page.
 
-## Usage
+## Using EpiCure 
 
 You can launch `EpiCure` in Napari by going to `Plugins>epicure>Start`. It will open an interface at the right side of the window where you can select the files to use. 
 
