@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Dict, List
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
-
-import cv2
+#import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -62,7 +61,7 @@ def build_spots_df(epic):
     # Invert X and Y to match TrackMate convention.
     df_spots["POSITION_X"] = df_spots["pos_y"] * epic.epi_metadata.get("ScaleXY", 1)
     df_spots["POSITION_Y"] = df_spots["pos_x"] * epic.epi_metadata.get("ScaleXY", 1)
-    df_spots["POSITION_Z"] = 0.0  # 2D data. TODO: handle 3D data.
+    df_spots["POSITION_Z"] = 0.0  # 2D data. 
     df_spots["POSITION_T"] = df_spots["FRAME"] * epic.epi_metadata.get("ScaleT", 1)
     df_spots["VISIBILITY"] = 1
     df_spots.drop(columns=["pos_x", "pos_y"], inplace=True)
@@ -75,13 +74,13 @@ def get_cell_contour(seg_array, label, frame):
     spot_seg = seg_array[frame, :, :] == label
     # print(spot_seg.dtype)
     # Pad to avoid contours on the border (skimage.measure.find_contours)
-    # spot_seg = np.pad(spot_seg, pad_width=1, mode='constant', constant_values=0)
-    spot_seg_uint8 = spot_seg.astype(np.uint8)
+    spot_seg = np.pad(spot_seg, pad_width=1, mode='constant', constant_values=0)
+    #spot_seg_uint8 = spot_seg.astype(np.uint8)
     # print(spot_seg_uint8.dtype)
 
     if np.sum(spot_seg) > 0:
-        # contours = find_contours(spot_seg)
-        contours, _ = cv2.findContours(spot_seg_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = find_contours(spot_seg, level=0.5)
+        #contours, _ = cv2.findContours(spot_seg_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # print(type(contours))
         # if label == 125 and frame == 0:
         #     contours = contours[:-1]  # hack to remove spurious contour
@@ -90,32 +89,36 @@ def get_cell_contour(seg_array, label, frame):
         # print(contours)
         assert len(contours) > 0, f"No contour found for label {label} in frame {frame}"
         # assert len(contours) < 2, f"More than one contour found for label {label} in frame {frame}"
-        # if len(contours) > 1:
+        if len(contours) > 1:
+             print(f"Warning, found two cells for label {label} at frame {frame}")
+             print(f"Keep only the first one in the export")
+        #if label==6:
         #     fig, ax = plt.subplots(1, 1)
-        #     ax.imshow(spot_seg)
-        #     # Plot each contour
+        #     ax.imshow(seg_array[frame,:,:]>0)
+             #ax.imshow(spot_seg, cmap="grey")
+             # Plot each contour
         #     for contour in contours:
         #         contour = contour.squeeze()
-        #         ax.plot(contour[:, 0], contour[:, 1], linewidth=2)
+        #         ax.plot(contour[:, 1], contour[:, 0], linewidth=1)
 
         #     plt.show()
 
-        return contours[0].squeeze()
+        return np.flip(contours[0].squeeze(), axis=1)
     return None
 
 
 def build_roi_contours(epic, df_spots):
     """Build a mapping from spot ID to its ROI contour."""
     roi_contours = {}
-    seg_layer = epic.outputing.seglayer.data
-    # print(type(seg_layer))
-    # print(seg_layer.shape)
+    seg_layer = epic.seg
     for _, spot in df_spots.iterrows():
         contour = get_cell_contour(seg_layer, spot["label"], spot["FRAME"])
         if contour is not None:
             # Convert from pixels to space units.
-            # TODO: is ScaleXY the pixel size or the conversion factor?
             contour = contour.astype(np.float64)  # in case the scale is a float
+            # Remove the padding
+            contour[:, 0] -= 1 
+            contour[:, 1] -= 1 
             contour[:, 0] *= epic.epi_metadata.get("ScaleXY", 1)
             contour[:, 1] *= epic.epi_metadata.get("ScaleXY", 1)
             # Convert contour from absolute to relative coordinates (to the cell XY position).
@@ -382,7 +385,7 @@ def save_trackmate_xml(epic, outname):
     if epic.verbose == 3:
         ut.show_info(f"ScaleXY: {epic.epi_metadata.get('ScaleXY')}")
         ut.show_info(f"ScaleT: {epic.epi_metadata.get('ScaleT')}")
-        ut.show_info(f"imgshape2D: {epic.epi_metadata.get('imgshape2D')}")
+        ut.show_info(f"imgshape2D: {epic.imgshape2D}")
         ut.show_info(f"UnitXY: {epic.epi_metadata.get('UnitXY')}")
         ut.show_info(f"UnitT: {epic.epi_metadata.get('UnitT')}")
 

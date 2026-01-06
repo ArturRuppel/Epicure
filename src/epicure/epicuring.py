@@ -92,7 +92,7 @@ class EpiCure:
 
     def load_movie(self, imgpath):
         """Load the intensity movie, and get metadata"""
-        self.epi_metadata["MovieFile"] = imgpath
+        self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
         self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.opentif(
             self.epi_metadata["MovieFile"], verbose=self.verbose > 1
         )
