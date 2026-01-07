@@ -4,7 +4,7 @@ from typing import Dict, List
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
 #import cv2
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import DisjointSet
@@ -14,7 +14,6 @@ import epicure.Utils as ut
 
 
 # TODO: deal with groups (store in MANUAL_SPOT_COLOR)
-
 
 SPOT_FEATS = [
     {"feature": "POSITION_X", "name": "X", "shortname": "X", "dimension": "POSITION", "isint": "false"},

@@ -229,22 +229,28 @@ def get_metadata_field(metadata, fieldname):
     return value
 
 
-def open_image(imagepath, verbose=True):
+def open_image(imagepath, get_metadata=False, verbose=True):
     """ Open an image with bioio library """
     imagename, extension = os.path.splitext(imagepath)
-    print(extension)
-    if extension == ".tif":
+    if (extension==".tif") or (extension==".tiff"):
         if verbose:
             print("Opening Tif image "+imagepath+" with bioio-tifffile")
         import bioio_tifffile
         img = BioImage(imagepath, reader=bioio_tifffile.Reader)
         image = img.data
+        image = np.squeeze(image)
+        if not get_metadata:
+            return image, 0, 1, None, 1, None
         try:
             scale_xy = img.scale.X # img.physical_pixel_sizes
             unit_xy = img.dimension_properties.X.unit
             scale_t = img.scale.T
             unit_t = img.dimension_properties.T.unit
             nchan = img.dims.C
+            if nchan == 1:
+                nchan = 0 ### was squeezed above
+            if (img.dims.Z) and (img.dims.T == 1):
+                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
             if scale_t is None:
                 # read it from the metadata field (string) 
                 scale_t = get_metadata_field(img.metadata, "finterval")
@@ -260,7 +266,6 @@ def open_image(imagepath, verbose=True):
             unit_xy = "um"
         if unit_t is None:
             unit_t = "min"
-    image = np.squeeze(image)
     return image, nchan, scale_xy, unit_xy, scale_t, unit_t
 
 def writeTif(img, imgname, scale, imtype, what=""):

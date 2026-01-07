@@ -94,7 +94,7 @@ class EpiCure:
         """Load the intensity movie, and get metadata"""
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
         self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.open_image(
-            self.epi_metadata["MovieFile"], verbose=self.verbose > 1
+            self.epi_metadata["MovieFile"], get_metadata=True, verbose=self.verbose > 1
         )
         ## transform static image to movie (add temporal dimension)
         if len(self.img.shape) == 2:
@@ -206,7 +206,7 @@ class EpiCure:
         """Load the segmentation file"""
         start_time = ut.start_time()
         self.epi_metadata["SegmentationFile"] = segpath
-        self.seg, _, _, _, _, _ = ut.open_image(segpath, verbose=self.verbose > 1)
+        self.seg, _, _, _, _, _ = ut.open_image(segpath, get_metadata=False, verbose=self.verbose > 1)
         self.seg = np.uint32(self.seg)
         ## transform static image to movie (add temporal dimension)
         if len(self.seg.shape) == 2:
@@ -235,7 +235,11 @@ class EpiCure:
 
         # display the segmentation file movie
         if self.viewer is not None:
-            self.seglayer = self.viewer.add_labels(self.seg, name="Segmentation", blending="additive", opacity=0.5, scale=self.viewer.layers["Movie"].scale)
+            if "Movie" in self.viewer.layers:
+                scale = self.viewer.layers["Movie"].scale
+            else:
+                scale = (1,1,1)
+            self.seglayer = self.viewer.add_labels(self.seg, name="Segmentation", blending="additive", opacity=0.5, scale=scale)
             self.viewer.dims.set_point(0, 0)
             self.seglayer.brush_size = 4  ## default label pencil drawing size
         if self.verbose > 0:
