@@ -22,3 +22,26 @@ When `Add grid` is clicked, the grid is visible and a layer `EpicGrid` is added 
 :round_pushpin: **Press <kbd>g</kbd> to show/hide the grid.**
 
 ![grid](imgs/display.png)
+
+## Visualization shortcuts :eye:
+
+???+ tip "Shortcut/options"
+
+     _**EpiCure shortcuts are only active when `Segmentation` layer is selected**_
+
+	=== "Display :eye:"
+	
+		|   |     |	
+		| ------------ | ------------------------------------ |
+		| <kbd>h</kbd>|Show/hide help message| 
+		| <kbd>a</kbd>|Opens a pop-up window with all the shortcuts| 
+		| <kbd>v</kbd>|Show/hide the raw movie (or click the :eye: icon next to the `Movie` layer in the bottom left panel)| 
+		| <kbd>b</kbd>|Show/hide the segmentation (or click the :eye: icon next to the `Segmentation` layer in the bottom left panel)| 
+		| <kbd>c</kbd>|Show **only** the raw movie. Press again to go back to previous display state| 
+		| <kbd>5</kbd>|Switch between zooming mode and moving mode| 
+		| <kbd>k</kbd>|Show/hide segmentation skeleton (or go to `Display` panel and click `Show segmentation skeleton`)| 
+		| <kbd>g</kbd>|Show/hide a grid (see [grid options above](#grid-options))| 
+		| <kbd>x</kbd>|Show/hide the event points (division, extrusion, suspect)| 
+		| `contour`| Labels (cells) can be displayed as filled areas (put `contour` to 0) or only the contour lines  `contour`>0 | 
+		|<kbd>Ctrl-c</kbd>/<kbd>Ctrl-d</kbd>| Increase/Decrease the `contour` value| 
+		|`show selected`|See only the current label (the pixels which have the value that is currently active in the `label` field)|

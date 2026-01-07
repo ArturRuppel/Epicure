@@ -4,6 +4,7 @@ import napari
 import epicure.Utils as ut
 from pathlib import Path
 import os, pickle
+from sys import platform
 
 def edit_preferences():
     """ Launch preferences edition interface"""
@@ -282,6 +283,9 @@ class ShortCut( QWidget ):
                         cur_modif.addItem("")
                         cur_modif.addItem("Control")
                         cur_modif.addItem("Shift")
+                        cur_modif.addItem("Alt")
+                        if platform == "darwin":
+                            cur_modif.addItem("Command")
                         cur_modif.addItem("Alt")
                         new_line.addWidget( cur_modif )
                         cur_modif.setCurrentText( modif )
