@@ -15,6 +15,7 @@ from scipy.ndimage import sum as ndsum
 from scipy.ndimage import generate_binary_structure as ndi_structure
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
+from bioio import BioImage
 import tifffile as tif # type: ignore
 import napari
 from napari.utils import progress # type: ignore
@@ -219,47 +220,52 @@ def remove_all_widgets( viewer ):
     """ Remove all widgets """
     viewer.window.remove_dock_widget("all")
 
-def opentif(imagepath, verbose=True):
-    img = tif.TiffFile(imagepath)
-    metadata = img.imagej_metadata
-    #print(metadata)
-    scale = 1
-    scalet = 1
-    unitxy = "um"
-    unitt = "min"
-    nchan = -1
-    if metadata is not None:
+def get_metadata_field(metadata, fieldname):
+    """ Read an imagej metadata string and get the value of fieldname """
+    if metadata.index(fieldname+"=") < 0:
+        return None
+    submeta = metadata[metadata.index(fieldname+"=")+len(fieldname)+1:]
+    value = submeta[0:submeta.index("\n")]
+    return value
+
+
+def open_image(imagepath, verbose=True):
+    """ Open an image with bioio library """
+    imagename, extension = os.path.splitext(imagepath)
+    print(extension)
+    if extension == ".tif":
         if verbose:
-            print(metadata)
+            print("Opening Tif image "+imagepath+" with bioio-tifffile")
+        import bioio_tifffile
+        img = BioImage(imagepath, reader=bioio_tifffile.Reader)
+        image = img.data
         try:
-            info = metadata["Info"]
-            if info is not None: 
-                metadatas = (info).splitlines()
-                scale = float(metadatas[-4].split()[2])*1000000
+            scale_xy = img.scale.X # img.physical_pixel_sizes
+            unit_xy = img.dimension_properties.X.unit
+            scale_t = img.scale.T
+            unit_t = img.dimension_properties.T.unit
+            nchan = img.dims.C
+            if scale_t is None:
+                # read it from the metadata field (string) 
+                scale_t = get_metadata_field(img.metadata, "finterval")
+                scale_t = float(scale_t)
+                unit_t = get_metadata_field(img.metadata, "tunit")
         except:
-            metadatas = None
-        try:
-            if metadata['physicalsizex'] is not None:
-                scale = float(metadata['physicalsizex'])
-            if metadata['finterval'] is not None:
-                scalet = float(metadata['finterval'])
-            if 'unit' in metadata:
-                if metadata['unit'] is not None:
-                    unitxy = metadata['unit']
-        except:
-            metadatas = None
-            #print(info)
-        try:
-            nchan = metadata["channels"]
-            print("Nb chanels found: "+str(nchan))
-        except:
-            nchan = -1
-    image = img.asarray()
-    img.close()
-    return image, nchan, scale, unitxy, scalet, unitt
+            print("Reading metadata failed. Check it manually")
+            if scale_xy is None:
+                scale_xy = 1
+            if scale_t is None:
+                scale_t = 1
+        if unit_xy is None:
+            unit_xy = "um"
+        if unit_t is None:
+            unit_t = "min"
+    image = np.squeeze(image)
+    return image, nchan, scale_xy, unit_xy, scale_t, unit_t
 
 def writeTif(img, imgname, scale, imtype, what=""):
     """ Write image in tif format """
+    #TODO: change to make it with bioio
     if len(img.shape) == 2:
         tif.imwrite(imgname, np.array(img, dtype=imtype), imagej=True, resolution=[1./scale, 1./scale], metadata={'unit': 'um', 'axes': 'YX'})
     else:

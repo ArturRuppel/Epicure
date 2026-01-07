@@ -3,7 +3,7 @@ import os
 import epicure.epicuring as epi
 
 def test_load_movie():
-    test_img = os.path.join(".", "data_test", "003_crop.tif")
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
     epic = epi.EpiCure()
     epic.load_movie(test_img)
     assert epic.img.shape == (11,208,426)

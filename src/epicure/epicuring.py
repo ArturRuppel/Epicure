@@ -93,7 +93,7 @@ class EpiCure:
     def load_movie(self, imgpath):
         """Load the intensity movie, and get metadata"""
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
-        self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.opentif(
+        self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.open_image(
             self.epi_metadata["MovieFile"], verbose=self.verbose > 1
         )
         ## transform static image to movie (add temporal dimension)
@@ -206,7 +206,7 @@ class EpiCure:
         """Load the segmentation file"""
         start_time = ut.start_time()
         self.epi_metadata["SegmentationFile"] = segpath
-        self.seg, _, _, _, _, _ = ut.opentif(segpath, verbose=self.verbose > 1)
+        self.seg, _, _, _, _, _ = ut.open_image(segpath, verbose=self.verbose > 1)
         self.seg = np.uint32(self.seg)
         ## transform static image to movie (add temporal dimension)
         if len(self.seg.shape) == 2:
