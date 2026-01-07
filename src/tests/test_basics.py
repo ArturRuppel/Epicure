@@ -31,15 +31,18 @@ def test_load_segmentation():
     assert np.max(epic.seg) == 1294
 
 def test_suggest():
+    """ Check segmentation file name suggestion """
+    ## case 1: file doesn't exists, creates it
     test_img = os.path.join(".", "test_data", "003_crop.tif")
     epic = epi.EpiCure()
     epic.load_movie(test_img)
     segfile = epic.suggest_segfile("epics")
     assert segfile is None
-    test_img = os.path.join(".", "test_data", "area3_Composite.tif")
+    ## case 2: if it exists, find it automatically
+    test_img = os.path.join(".", "test_data", "013_crop.tif")
     epic.load_movie(test_img)
     segfile = epic.suggest_segfile("epics")
-    assert segfile == os.path.join(".", "data_test", "epics", "area3_Composite_labels.tif")
+    assert segfile == os.path.abspath(os.path.join(".", "test_data", "epics", "013_crop_labels.tif"))
 
 def test_init_epic():
     epic = epi.EpiCure()
@@ -48,4 +51,4 @@ def test_init_epic():
 if __name__ == "__main__":
     test_load_movie()
     test_suggest()
-    print("********* Test cure completed ***********")
+    print("********* Test basics cure completed ***********")

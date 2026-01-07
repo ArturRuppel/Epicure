@@ -250,7 +250,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
             if nchan == 1:
                 nchan = 0 ### was squeezed above
             if (img.dims.Z) and (img.dims.T == 1):
-                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
+                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in tother softwares/plugins")
             if scale_t is None:
                 # read it from the metadata field (string) 
                 scale_t = get_metadata_field(img.metadata, "finterval")
