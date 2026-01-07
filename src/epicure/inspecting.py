@@ -826,7 +826,7 @@ class Inspecting(QWidget):
         """ Remove one event at index ind """
         self.events.selected_data = [ind]
         sid = self.events.properties["id"][ind]
-        if (remove_division) and ("division" in self.event_types.keys()) and (ind in self.event_types["division"]):
+        if (remove_division) and ("division" in self.event_types.keys()) and (sid in self.event_types["division"]):
             self.epicure.tracking.remove_division( self.events.properties["label"][ind] )
         self.events.remove_selected()
         self.remove_event_types(sid)

@@ -663,6 +663,8 @@ class EpiCure:
                 self.tracking.graph = vals
                 if self.tracking.graph is not None:
                     self.tracking.tracklayer.refresh()
+                if self.verbose > 2:
+                    print(f"Loaded track graph: {self.tracking.graph}")
             if key == "Events":
                 ## Load events information
                 if "Points" in vals.keys():
