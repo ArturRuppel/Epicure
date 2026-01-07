@@ -25,6 +25,7 @@ lib64/
 parts/
 src/_tests/files/
 sdist/
+test_data/epics/
 var/
 *.egg-info/
 .installed.cfg
