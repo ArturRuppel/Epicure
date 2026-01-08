@@ -34,6 +34,37 @@ def test_suspect_frame():
     segedit.event_intensity(True)
     assert len(outlier.data) > (nsus+5)
 
+def test_events_division():
+    """ Handling events: add/remove division event """
+    test_img = os.path.join(".", "test_data", "013_crop.tif")
+    ## load and initialize
+    viewer = napari.Viewer(show=False)
+    epic = epi.EpiCure(viewer)
+    epic.load_movie(test_img)
+    epic.go_epicure("epics")
+    susp = epic.inspecting
+
+    ## initialisation: only one division
+    assert susp.nb_events() == 1
+    ## check it's a division
+    ind = 0
+    assert susp.is_division(ind)
+    assert len(epic.tracking.graph) == 2
+
+    ## remove this event
+    susp.exonerate_one(ind, remove_division=True)
+    assert susp.nb_events() == 0
+    ## check it was removed from the tracks graph
+    assert len(epic.tracking.graph) == 0
+
+    ## add it back
+    epic.editing.add_division(490,477,3) ## added in Edit part
+    assert susp.is_division(ind)
+    print(epic.tracking.graph)
+    assert len(epic.tracking.graph) == 2
+    ## check that parent found was the correct one (73)
+    assert epic.tracking.graph[490] == [73]
+
 def test_suspect_track():
     """ Track and flag weird tracks """
     test_img = os.path.join(".", "test_data", "003_crop.tif")
@@ -102,7 +133,8 @@ def test_boundaries():
     assert len(epic.inspecting.boundary_cells[0]) > 20
 
 if __name__ == "__main__":
-    test_suspect_frame()
-    test_suspect_track()
-    test_boundaries()
+    #test_suspect_frame()
+    #test_suspect_track()
+    #test_boundaries()
+    test_events_division()
     print("********* Test suspects cure completed ***********")

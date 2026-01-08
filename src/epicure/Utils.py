@@ -250,7 +250,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
     format = "all"
     if (extension==".tif") or (extension==".tiff"):
         if verbose:
-            print("Opening Tif image "+imagepath+" with bioio-tifffile")
+            print("Opening Tif image "+str(imagepath)+" with bioio-tifffile")
         import bioio_tifffile
         if version_python_minor(10):
             img = BioImage(imagepath, reader=bioio_tifffile.Reader)
@@ -262,7 +262,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
     else:
         import bioio_bioformats
         if verbose:
-            print("Opening "+extension+" image "+imagepath+" with bioio-bioformats")
+            print("Opening "+extension+" image "+str(imagepath)+" with bioio-bioformats")
         if version_python_minor(10):
             img = BioImage(imagepath, reader=bioio_bioformats.Reader)
         else:

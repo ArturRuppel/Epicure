@@ -1506,7 +1506,7 @@ class Inspecting(QWidget):
         self.events.current_size = int(self.event_size.value())
         self.update_nevents_display()
 
-    def add_division( self, labela, labelb, parent, frame ):
+    def add_division_event( self, labela, labelb, parent, frame ):
         """ Add a division event given the two daughter labels, the parent one and frame of division """
         indexes = self.epicure.tracking.get_index( [labela, labelb], frame )
         indexes = indexes.flatten()
