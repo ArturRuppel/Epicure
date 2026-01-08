@@ -228,44 +228,82 @@ def get_metadata_field(metadata, fieldname):
     value = submeta[0:submeta.index("\n")]
     return value
 
+def get_metadata_json(metadata, fieldname):
+    """ Read a metadata from json of bioio-bioformats to get value of fieldname """
+    if metadata.index("\""+fieldname+"\"=") < 0:
+        return None
+    submeta = metadata[metadata.index("\""+fieldname+"\"=")+len(fieldname)+3:]
+    value = submeta[0:submeta.index(",")]
+    return value
+
 
 def open_image(imagepath, get_metadata=False, verbose=True):
     """ Open an image with bioio library """
     imagename, extension = os.path.splitext(imagepath)
+    format = "all"
     if (extension==".tif") or (extension==".tiff"):
         if verbose:
             print("Opening Tif image "+imagepath+" with bioio-tifffile")
         import bioio_tifffile
         img = BioImage(imagepath, reader=bioio_tifffile.Reader)
-        image = img.data
-        image = np.squeeze(image)
-        if not get_metadata:
-            return image, 0, 1, None, 1, None
-        try:
-            scale_xy = img.scale.X # img.physical_pixel_sizes
-            unit_xy = img.dimension_properties.X.unit
-            scale_t = img.scale.T
-            unit_t = img.dimension_properties.T.unit
-            nchan = img.dims.C
-            if nchan == 1:
-                nchan = 0 ### was squeezed above
-            if (img.dims.Z) and (img.dims.T == 1):
-                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in tother softwares/plugins")
-            if scale_t is None:
+        format = "tif"
+    else:
+        import bioio_bioformats
+        if verbose:
+            print("Opening "+extension+" image "+imagepath+" with bioio-bioformats")
+        img = BioImage(imagepath, reader=bioio_bioformats.Reader)
+    image = img.data
+    image = np.squeeze(image)
+        
+    if not get_metadata:
+        return image, 0, 1, None, 1, None
+
+    try: 
+        nchan = img.dims.C
+        if nchan == 1:
+            nchan = 0 ### was squeezed above
+    except:
+        pass
+    
+    ## spatial metadata
+    try:
+        scale_xy = img.scale.X # img.physical_pixel_sizes
+        unit_xy = img.dimension_properties.X.unit
+        if unit_xy is None:
+            if format == "all":
+                unit_xy = get_metadata_json(img.metadata.json(), "physical_size_x_unit")
+            elif format == "tif":
+                unit_xy = get_metadata_field(img.metadata, "physical_size_x_unit")
+    except:
+        print("Reading spatial metadata might have failed. Check it manually")
+        if scale_xy is None:
+            scale_xy = 1
+
+    ## temporal metadata 
+    try:
+        scale_t = img.scale.T
+        unit_t = img.dimension_properties.T.unit
+        if (img.dims.Z) and (img.dims.T == 1):
+            print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
+        
+        if scale_t is None:
                 # read it from the metadata field (string) 
+            if format == "all":
+                scale_t = get_metadata_json(img.metadata.json(), "time_increment_unit")
+                scale_t = float(scale_t)
+                unit_t = get_metadata_json(img.metadata.json(), "time_increment")
+            elif format == "tif":
                 scale_t = get_metadata_field(img.metadata, "finterval")
                 scale_t = float(scale_t)
                 unit_t = get_metadata_field(img.metadata, "tunit")
-        except:
-            print("Reading metadata failed. Check it manually")
-            if scale_xy is None:
-                scale_xy = 1
-            if scale_t is None:
-                scale_t = 1
-        if unit_xy is None:
-            unit_xy = "um"
-        if unit_t is None:
-            unit_t = "min"
+    except:
+        print("Reading temporal metadata might have failed. Check it manually")
+        if scale_t is None:
+            scale_t = 1
+    if unit_xy is None:
+        unit_xy = "um"
+    if unit_t is None:
+        unit_t = "min"
     return image, nchan, scale_xy, unit_xy, scale_t, unit_t
 
 def writeTif(img, imgname, scale, imtype, what=""):
