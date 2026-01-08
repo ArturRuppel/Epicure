@@ -1,5 +1,5 @@
 import numpy as np
-import os
+import os, sys
 import time
 import math
 from skimage.measure import regionprops, find_contours, regionprops_table
@@ -77,6 +77,13 @@ def close_progress( viewer, progress_bar ):
 def version_napari_above( compare_version ):
     """ Compare if the current version of napari is above given version """
     return Version(napari.__version__) > Version(compare_version)
+
+def version_python_minor(version):
+    """ Return if python version (minor, so 3.XX) is above given version """
+    if int(sys.version_info[0]) != 3:
+        show_warning("Python major version is not 3, not handled")
+        return False
+    return int(sys.version_info[1]) >= version
 
 def get_directory(imagepath):
     return os.path.dirname(imagepath)
@@ -245,14 +252,26 @@ def open_image(imagepath, get_metadata=False, verbose=True):
         if verbose:
             print("Opening Tif image "+imagepath+" with bioio-tifffile")
         import bioio_tifffile
-        img = BioImage(imagepath, reader=bioio_tifffile.Reader)
+        if version_python_minor(10):
+            img = BioImage(imagepath, reader=bioio_tifffile.Reader)
+        else:
+            ## python 3.9 or under
+            reader = bioio_tifffile.Reader
+            img = reader(imagepath)
         format = "tif"
     else:
         import bioio_bioformats
         if verbose:
             print("Opening "+extension+" image "+imagepath+" with bioio-bioformats")
-        img = BioImage(imagepath, reader=bioio_bioformats.Reader)
+        if version_python_minor(10):
+            img = BioImage(imagepath, reader=bioio_bioformats.Reader)
+        else:
+            ## python 3.9 or under
+            reader = bioio_bioformats.Reader
+            img = reader(imagepath)
     image = img.data
+    if verbose:
+        print(f"Loaded image shape: {image.shape}")
     image = np.squeeze(image)
         
     if not get_metadata:
@@ -263,12 +282,18 @@ def open_image(imagepath, get_metadata=False, verbose=True):
         if nchan == 1:
             nchan = 0 ### was squeezed above
     except:
+        nchan = 0
         pass
     
     ## spatial metadata
+    scale_xy, unit_xy, scale_t, unit_t = None, None, None, None
     try:
         scale_xy = img.scale.X # img.physical_pixel_sizes
         unit_xy = img.dimension_properties.X.unit
+    except:
+        pass
+
+    try: 
         if unit_xy is None:
             if format == "all":
                 unit_xy = get_metadata_json(img.metadata.json(), "physical_size_x_unit")
@@ -285,7 +310,10 @@ def open_image(imagepath, get_metadata=False, verbose=True):
         unit_t = img.dimension_properties.T.unit
         if (img.dims.Z) and (img.dims.T == 1):
             print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
-        
+    except:
+        pass
+
+    try: 
         if scale_t is None:
                 # read it from the metadata field (string) 
             if format == "all":

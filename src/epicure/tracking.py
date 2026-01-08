@@ -485,12 +485,16 @@ class Tracking(QWidget):
     def get_position( self, track_id, frame ):
         """ Get position of the track at given frame """
         ind = self.get_index( track_id, frame )
-        return [int(self.track_data[ind, 2]), int(self.track_data[ind,3])]
+        ind = ind.flatten()[0] ## ensure it's single element
+        x,y = self.track_data[ind,2], self.track_data[ind,3]
+        return [int(x), int(y)]
 
     def get_full_position( self, track_id, frame ):
         """ Get position of the track at given frame, with the frame itself """
         ind = self.get_index( track_id, frame )
-        return [frame, int(self.track_data[ind, 2]), int(self.track_data[ind,3])]
+        ind = ind.flatten()[0] ## ensure it's single element
+        x,y = self.track_data[ind,2], self.track_data[ind,3]
+        return [frame,x,y]
 
     def mean_position(self, indexes, only_first=False):
         """ Mean positions of tracks at indexes """
@@ -876,7 +880,11 @@ class Tracking(QWidget):
         new_mergedf = mergedf.copy()
         
         unique_track_ids = np.unique(track_df['track_id'])
-        first_labels = track_df.groupby('track_id', group_keys=False).apply(lambda x: x.loc[x['frame'].idxmin(), 'label'], include_groups=False).to_dict()
+        if ut.version_python_minor(10):
+            ## from python3.10, get futurewarning on groupby without group_keys and include_groups keywords
+            first_labels = track_df.groupby('track_id', group_keys=False).apply(lambda x: x.loc[x['frame'].idxmin(), 'label'], include_groups=False).to_dict()
+        else:
+            first_labels = track_df.groupby('track_id').apply(lambda x: x.loc[x['frame'].idxmin(), 'label']).to_dict()
         
         for tid in unique_track_ids:
             newval = first_labels[tid]
