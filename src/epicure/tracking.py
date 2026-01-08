@@ -876,7 +876,7 @@ class Tracking(QWidget):
         new_mergedf = mergedf.copy()
         
         unique_track_ids = np.unique(track_df['track_id'])
-        first_labels = track_df.groupby('track_id').apply(lambda x: x.loc[x['frame'].idxmin(), 'label']).to_dict()
+        first_labels = track_df.groupby('track_id', group_keys=False).apply(lambda x: x.loc[x['frame'].idxmin(), 'label'], include_groups=False).to_dict()
         
         for tid in unique_track_ids:
             newval = first_labels[tid]
