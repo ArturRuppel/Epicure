@@ -83,6 +83,7 @@ def test_suspect_track():
     assert susp.nb_events() > 50 
 
 def test_boundaries():
+    """ Detecting cells on border/boundaries and removing border cells """
     test_img = os.path.join(".", "test_data", "003_crop.tif")
     test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
 
