@@ -65,6 +65,56 @@ def test_events_division():
     ## check that parent found was the correct one (73)
     assert epic.tracking.graph[490] == [73]
 
+def test_events_extrusion():
+    """ Handling events: detect/remove extrusion event """
+    test_img = os.path.join(".", "test_data", "013_crop.tif")
+    ## load and initialize
+    viewer = napari.Viewer(show=False)
+    epic = epi.EpiCure(viewer)
+    epic.load_movie(test_img)
+    epic.go_epicure("epics")
+    susp = epic.inspecting
+
+    ## initialisation: only one division
+    assert susp.nb_events() == 1
+    ## check it's a division
+    ind = 0
+    assert susp.is_division(ind)
+    assert len(epic.tracking.graph) == 2
+
+    ## Parameters for track inspection: only get extrusions
+    ## disable all options
+    susp.ignore_borders.setChecked(False)
+    susp.ignore_boundaries.setChecked(False)
+    susp.check_jump.setChecked(False)
+    susp.check_length.setChecked(False)
+    susp.check_shape.setChecked(False)
+    susp.check_size.setChecked(False)
+    susp.get_apparition.setChecked(False)
+    susp.get_disparition.setChecked(False)
+    susp.get_division.setChecked(False)
+    susp.get_gaps.setChecked(False)
+    ## active only get extrusions option 
+    susp.threshold_disparition.setText("100")
+    susp.get_extrusions.setChecked(True)
+
+    ## do the inspection
+    susp.inspect_tracks(subprogress=False)
+    ## should have found one extrusion
+    assert susp.nb_events() == 2
+    assert susp.is_extrusion(1)
+
+    ## remove it
+    ## select it as current event
+    susp.event_num.setValue(1)
+    ## zoom on it
+    susp.go_to_event()
+    ## remove the event
+    susp.clear_event()
+    assert susp.nb_events() == 1
+    assert susp.is_division(ind)
+
+
 def test_suspect_track():
     """ Track and flag weird tracks """
     test_img = os.path.join(".", "test_data", "003_crop.tif")
@@ -136,5 +186,6 @@ if __name__ == "__main__":
     #test_suspect_frame()
     #test_suspect_track()
     #test_boundaries()
-    test_events_division()
+    #test_events_division()
+    test_events_extrusion()
     print("********* Test suspects cure completed ***********")
