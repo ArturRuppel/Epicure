@@ -584,6 +584,7 @@ class EpiCure:
                 # epidata["Events"]["Symbols"] = self.inspecting.events.symbol
                 # epidata["Events"]["Colors"] = self.inspecting.events.face_color
         if "Movie" in self.viewer.layers:
+            ## to keep movie layer display settings for this file
             epidata["Display"] = {}
             epidata["Display"]["MovieContrast"] = self.viewer.layers["Movie"].contrast_limits
         pickle.dump(epidata, outfile)
