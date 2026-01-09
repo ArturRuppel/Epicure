@@ -2,7 +2,7 @@ import numpy as np
 import os, time, pickle
 import napari
 import math
-from qtpy.QtWidgets import QPushButton, QVBoxLayout, QTabWidget, QWidget
+from qtpy.QtWidgets import QVBoxLayout, QTabWidget, QWidget
 from napari.utils import progress
 from skimage.morphology import skeletonize
 from skimage.measure import regionprops
@@ -107,7 +107,7 @@ class EpiCure:
                 caxis = 1
                 cval = nchan
             else:
-                ## image has multiple chanels
+                ## one image with multiple chanels
                 minshape = min(self.img.shape)
                 caxis = self.img.shape.index(minshape)
                 cval = minshape
@@ -562,7 +562,7 @@ class EpiCure:
                         self.epi_metadata[key] = vals
                 infile.close()
             except:
-                ut.show_warning("Line 537 - Could not read EpiCure data file " + epiname)
+                ut.show_warning("Could not read EpiCure metadata file " + epiname)
 
     def save_epicures(self, imtype="float32"):
         outname = os.path.join(self.outdir, self.imgname + "_labels.tif")
@@ -583,6 +583,9 @@ class EpiCure:
                 epidata["Events"]["Types"] = self.inspecting.event_types
                 # epidata["Events"]["Symbols"] = self.inspecting.events.symbol
                 # epidata["Events"]["Colors"] = self.inspecting.events.face_color
+        if "Movie" in self.viewer.layers:
+            epidata["Display"] = {}
+            epidata["Display"]["MovieContrast"] = self.viewer.layers["Movie"].contrast_limits
         pickle.dump(epidata, outfile)
         outfile.close()
 
@@ -683,6 +686,11 @@ class EpiCure:
                     if len(pts) > 0 and self.verbose > 0:
                         print("events loaded")
                     ut.show_info("Loaded " + str(len(pts)) + " events")
+            if key == "Display":
+                if vals is not None:
+                    ## load display setting
+                    if "MovieContrast" in vals.keys():
+                        self.viewer.layers["Movie"].contrast_limits = vals["MovieContrast"]
 
     def load_epicure_data_old(self, groups, infile):
         """Load saved infos from file"""
