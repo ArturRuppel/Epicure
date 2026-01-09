@@ -826,7 +826,7 @@ class Inspecting(QWidget):
         """ Remove one event at index ind """
         self.events.selected_data = [ind]
         sid = self.events.properties["id"][ind]
-        if (remove_division) and ("division" in self.event_types.keys()) and (ind in self.event_types["division"]):
+        if (remove_division) and ("division" in self.event_types.keys()) and (sid in self.event_types["division"]):
             self.epicure.tracking.remove_division( self.events.properties["label"][ind] )
         self.events.remove_selected()
         self.remove_event_types(sid)
@@ -1506,7 +1506,7 @@ class Inspecting(QWidget):
         self.events.current_size = int(self.event_size.value())
         self.update_nevents_display()
 
-    def add_division( self, labela, labelb, parent, frame ):
+    def add_division_event( self, labela, labelb, parent, frame ):
         """ Add a division event given the two daughter labels, the parent one and frame of division """
         indexes = self.epicure.tracking.get_index( [labela, labelb], frame )
         indexes = indexes.flatten()

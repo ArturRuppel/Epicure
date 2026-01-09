@@ -63,6 +63,7 @@ class Displaying(QWidget):
         layout.addWidget(self.show_grid_options)
         layout.addWidget(self.group_grid)
         
+        self.save_contrast = wid.add_check("Save Movie current contrast", True, descr="When saving current settings, save also current contrast of the Movie layer" )
         save_pref = wid.add_button( "Set current settings as default", self.save_current_display, "Save the current settings so that EpiCure will open in the same state next time" )
         layout.addWidget(save_pref)
         

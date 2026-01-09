@@ -1,5 +1,9 @@
+"""
+    Diverse functions for EpiCure
+"""
+
 import numpy as np
-import os
+import os, sys
 import time
 import math
 from skimage.measure import regionprops, find_contours, regionprops_table
@@ -15,6 +19,7 @@ from scipy.ndimage import sum as ndsum
 from scipy.ndimage import generate_binary_structure as ndi_structure
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
+from bioio import BioImage
 import tifffile as tif # type: ignore
 import napari
 from napari.utils import progress # type: ignore
@@ -76,6 +81,13 @@ def close_progress( viewer, progress_bar ):
 def version_napari_above( compare_version ):
     """ Compare if the current version of napari is above given version """
     return Version(napari.__version__) > Version(compare_version)
+
+def version_python_minor(version):
+    """ Return if python version (minor, so 3.XX) is above given version """
+    if int(sys.version_info[0]) != 3:
+        show_warning("Python major version is not 3, not handled")
+        return False
+    return int(sys.version_info[1]) >= version
 
 def get_directory(imagepath):
     return os.path.dirname(imagepath)
@@ -219,47 +231,120 @@ def remove_all_widgets( viewer ):
     """ Remove all widgets """
     viewer.window.remove_dock_widget("all")
 
-def opentif(imagepath, verbose=True):
-    img = tif.TiffFile(imagepath)
-    metadata = img.imagej_metadata
-    #print(metadata)
-    scale = 1
-    scalet = 1
-    unitxy = "um"
-    unitt = "min"
-    nchan = -1
-    if metadata is not None:
+def get_metadata_field(metadata, fieldname):
+    """ Read an imagej metadata string and get the value of fieldname """
+    if metadata.index(fieldname+"=") < 0:
+        return None
+    submeta = metadata[metadata.index(fieldname+"=")+len(fieldname)+1:]
+    value = submeta[0:submeta.index("\n")]
+    return value
+
+def get_metadata_json(metadata, fieldname):
+    """ Read a metadata from json of bioio-bioformats to get value of fieldname """
+    if metadata.index("\""+fieldname+"\"=") < 0:
+        return None
+    submeta = metadata[metadata.index("\""+fieldname+"\"=")+len(fieldname)+3:]
+    value = submeta[0:submeta.index(",")]
+    return value
+
+
+def open_image(imagepath, get_metadata=False, verbose=True):
+    """ Open an image with bioio library """
+    imagename, extension = os.path.splitext(imagepath)
+    format = "all"
+    if (extension==".tif") or (extension==".tiff"):
         if verbose:
-            print(metadata)
-        try:
-            info = metadata["Info"]
-            if info is not None: 
-                metadatas = (info).splitlines()
-                scale = float(metadatas[-4].split()[2])*1000000
-        except:
-            metadatas = None
-        try:
-            if metadata['physicalsizex'] is not None:
-                scale = float(metadata['physicalsizex'])
-            if metadata['finterval'] is not None:
-                scalet = float(metadata['finterval'])
-            if 'unit' in metadata:
-                if metadata['unit'] is not None:
-                    unitxy = metadata['unit']
-        except:
-            metadatas = None
-            #print(info)
-        try:
-            nchan = metadata["channels"]
-            print("Nb chanels found: "+str(nchan))
-        except:
-            nchan = -1
-    image = img.asarray()
-    img.close()
-    return image, nchan, scale, unitxy, scalet, unitt
+            print("Opening Tif image "+str(imagepath)+" with bioio-tifffile")
+        import bioio_tifffile
+        if version_python_minor(10):
+            img = BioImage(imagepath, reader=bioio_tifffile.Reader)
+        else:
+            ## python 3.9 or under
+            reader = bioio_tifffile.Reader
+            img = reader(imagepath)
+        format = "tif"
+    else:
+        import bioio_bioformats
+        if verbose:
+            print("Opening "+extension+" image "+str(imagepath)+" with bioio-bioformats")
+        if version_python_minor(10):
+            img = BioImage(imagepath, reader=bioio_bioformats.Reader)
+        else:
+            ## python 3.9 or under
+            reader = bioio_bioformats.Reader
+            img = reader(imagepath)
+    image = img.data
+    if verbose:
+        print(f"Loaded image shape: {image.shape}")
+    if (len(image.shape) == 5):
+        ## correct format of the image and metadata with TCZYX
+        if (img.dims is not None) and len(img.dims.shape)==5 :
+            if (img.dims.Z>1) and (img.dims.T == 1):
+                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
+                image = np.swapaxes(image, 0, 2)
+    image = np.squeeze(image)
+        
+    if not get_metadata:
+        return image, 0, 1, None, 1, None
+
+    try: 
+        nchan = img.dims.C
+        if nchan == 1:
+            nchan = 0 ### was squeezed above
+    except:
+        nchan = 0
+        pass
+    
+    ## spatial metadata
+    scale_xy, unit_xy, scale_t, unit_t = None, None, None, None
+    try:
+        scale_xy = img.scale.X # img.physical_pixel_sizes
+        unit_xy = img.dimension_properties.X.unit
+    except:
+        pass
+
+    try: 
+        if unit_xy is None:
+            if format == "all":
+                unit_xy = get_metadata_json(img.metadata.json(), "physical_size_x_unit")
+            elif format == "tif":
+                unit_xy = get_metadata_field(img.metadata, "physical_size_x_unit")
+    except:
+        print("Reading spatial metadata might have failed. Check it manually")
+        if scale_xy is None:
+            scale_xy = 1
+
+    ## temporal metadata 
+    try:
+        scale_t = img.scale.T
+        unit_t = img.dimension_properties.T.unit
+    except:
+        pass
+
+    try: 
+        if scale_t is None:
+                # read it from the metadata field (string) 
+            if format == "all":
+                scale_t = get_metadata_json(img.metadata.json(), "time_increment_unit")
+                scale_t = float(scale_t)
+                unit_t = get_metadata_json(img.metadata.json(), "time_increment")
+            elif format == "tif":
+                scale_t = get_metadata_field(img.metadata, "finterval")
+                scale_t = float(scale_t)
+                unit_t = get_metadata_field(img.metadata, "tunit")
+    except:
+        print("Reading temporal metadata might have failed. Check it manually")
+        if scale_t is None:
+            scale_t = 1
+    if unit_xy is None:
+        unit_xy = "um"
+    if unit_t is None:
+        unit_t = "min"
+    return image, nchan, scale_xy, unit_xy, scale_t, unit_t
 
 def writeTif(img, imgname, scale, imtype, what=""):
     """ Write image in tif format """
+    #TODO: change to make it with bioio
     if len(img.shape) == 2:
         tif.imwrite(imgname, np.array(img, dtype=imtype), imagej=True, resolution=[1./scale, 1./scale], metadata={'unit': 'um', 'axes': 'YX'})
     else:

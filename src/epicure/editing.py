@@ -1745,7 +1745,7 @@ class Editing( QWidget ):
         if parent is not None and parent[0] is not None:
             self.epicure.tracking.add_division( labela, labelb, parent[0] )
             ## add division to event list (if active)
-            self.epicure.inspecting.add_division( labela, labelb, parent[0], frame )
+            self.epicure.inspecting.add_division_event( labela, labelb, parent[0], frame )
             return True
         return False
             

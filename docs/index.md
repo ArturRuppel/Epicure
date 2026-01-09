@@ -5,19 +5,28 @@
 You can install EpiCure with pip: `pip install epicure` in a python virtual environment.
 For more precision about the installation, see the [Installation](./Installation.md) page.
 
-## Usage
+## Using EpiCure 
 
+### Through Napari interface (recommended)
 You can launch `EpiCure` in Napari by going to `Plugins>epicure>Start`. It will open an interface at the right side of the window where you can select the files to use. 
 
 The first file to choose is the movie containing the epithelial staining. 
-It should be _2D(+time), .tif file_. 
+It should be _2D(+time/channel) file_. 
 
-The second file is the segmentation of this movie (also a `.tif` file). It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
+The second file is the segmentation of this movie (it should contain only the segmentation). It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
 _Note that if you haven't done the segmentation yet, there's an [additional option](./Segment-option.md) in EpiCure to directly run [EpySeg](https://github.com/baigouy/EPySeg) on the loaded movie._ 
+
+If the input movie file had already been processed with EpiCure previously (and saved), EpiCure will automatically propose to load the saved file and reload the previous parameters. You can directly click `START CURE` in this case.
 
 Additionnal options are available to tune it to your usage, please see [Start epicure](./Start-epicure.md) page for more informations.
 
 Then click on `START CURE` to start the main process.
+
+### From python (Notebook, script, test) 
+
+While EpiCure is optimized for a graphical usage as its scope relies on easing manual edition of segmentation, there's a possbility to launch it without starting Napari first (or at all).
+This can be useful for automatic testing or batching some process. 
+See our released [notebooks](https://github.com/gletort/Epicure/tree/main/notebooks/) for example of usage or our [test files](https://github.com/gletort/Epicure/tree/main/src/tests/). 
 
 ## Main interface
 
@@ -85,5 +94,4 @@ EpiCure also proposes specific options outside of the main pipeline:
 
 * [Concatenate EpiCured movies](./Concatenate-epicured-movies.md): to combine two movies (from the same original one that was splitted before temporally) already analysed with EpiCure into one big epicured movie.
 This is usefull for huge movie where the user prefered to split it in sub-movies temporally to reduce the loaded data size and allow for more responsiveness of the interface.
-* [Segment](./Segment-option.md): by default, EpiCure doesn't perform segmentation to allow for more generability by using already existing solutions. This option links directly EpiCure with [napari-epyseg](https://github.com/gletort/napari-epyseg) plugin to perform the segmentation directly.
-
+* [Segment](./Segment-option.md): by default, EpiCure doesn't perform segmentation to allow for more generability by using already existing solutions. This option links directly EpiCure with [napari-epyseg](https://github.com/ImageAnalysisHub/napari-epyseg) plugin to perform the segmentation directly.

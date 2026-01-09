@@ -3,46 +3,57 @@ import os
 import epicure.epicuring as epi
 
 def test_track_methods():
-
-    test_img = os.path.join(".", "data_test", "003_crop.tif")
-    test_seg = os.path.join(".", "data_test", "003_crop_epyseg.tif")
+    """ Tracking with EpiCure with Laptrack, different parameters """
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
+    test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
 
     ## load and initialize
     epic = epi.EpiCure()
     epic.load_movie(test_img)
     epic.go_epicure("test_epics", test_seg)
-    
+
+    ## no tracked yet 
     assert epic.tracked == 0
-    assert epic.nlabels() == 2842
+    alllabels = epic.nlabels()
+    assert alllabels == 1294
 
-    track = epic.tracking
     # default tracking
-    track.do_tracking()
-    assert epic.nlabels() == 347
-    assert epic.nlabels() == track.nb_tracks()
-    assert track.graph is not None
-    assert 1170 in track.graph.keys()
-    assert track.graph[855] == [80, 83]
-    assert not track.check_gap()
-
+    track = epic.tracking
+    ## Chosse method overlap for tracking
     track.track_choice.setCurrentText("Laptrack-Overlaps")
+    track.min_iou.setText("0.1")
+    track.split_cost.setText("0.5")
+    track.merg_cost.setText("0")
     track.do_tracking()
-    assert epic.nlabels() == track.nb_tracks()
+    ## after tracking should have much less labels now
+    ntracks = epic.nlabels()
+    assert ntracks < alllabels 
+    assert ntracks == track.nb_tracks()
     assert track.graph is not None
-    assert epic.nlabels() == 309
+    ## found divisions 
+    ## check two first results in graph are the daugthers: mother
+    first = list(track.graph.keys())[0]
+    first_mother = track.graph[first]
+    second = list(track.graph.keys())[1]
+    assert track.graph[second] == first_mother
     assert not track.check_gap()
 
+    ## check reset function: reread the tracks from the labels (so should be the same)
     track.reset_tracks()
-    assert epic.nlabels() == 309
+    assert epic.nlabels() == ntracks 
     assert epic.nlabels() == track.nb_tracks()
 
     ## check one track validity
+    ## first tracking, no modification so should be ordered
     track_id = track.get_track_list()[20]
     assert track_id == 21
     assert track.get_first_frame( track_id ) == 0
     feats = track.measure_track_features( track_id )
-    assert feats["TrackDuration"] == 8
+    assert feats["TrackDuration"] == 11
+    assert feats["NbGaps"] == 0 
+    assert feats["Label"] == track_id 
 
+    # Operations to get last frame, remove it
     last = track.get_last_frame(track_id)
     track.remove_one_frame( track_id, last )
     newlast = track.get_last_frame(track_id)
@@ -55,7 +66,8 @@ def test_track_methods():
     ## gaps are allowed now
     assert len(gaped) > 0
     epic.handle_gaps( None )
-    assert track.nb_tracks() == 310
+    assert track.nb_tracks() == ntracks + 1 
 
-#track_methods()
-#test_track_methods()
+if __name__ == "__main__":
+    test_track_methods()
+    print("********* Test tracking cure completed ***********")

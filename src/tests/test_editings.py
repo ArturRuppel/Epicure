@@ -2,13 +2,14 @@ import numpy as np
 import os
 import epicure.epicuring as epi
 import epicure.Utils as ut
-from unittest.mock import Mock
+#from unittest.mock import Mock
 import napari
 from vispy import keys
 
 def test_epicuring_bindings():
-    test_img = os.path.join(".", "data_test", "003_crop.tif")
-    test_seg = os.path.join(".", "data_test", "003_crop_epyseg.tif")
+    """ Test shortcuts for displaying layers """
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
+    test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
     viewer = napari.Viewer(show=False)
     epic = epi.EpiCure(viewer)
     epic.load_movie(test_img)
@@ -31,8 +32,8 @@ def test_epicuring_bindings():
     assert "EpicGrid" in epic.viewer.layers
     
 def test_merge():
-    test_img = os.path.join(".", "data_test", "003_crop.tif")
-    test_seg = os.path.join(".", "data_test", "003_crop_epyseg.tif")
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
+    test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
     viewer = napari.Viewer(show=False)
     epic = epi.EpiCure(viewer)
     epic.load_movie(test_img)
@@ -42,21 +43,21 @@ def test_merge():
 
     segedit = epic.editing
     assert segedit is not None
-    val = epic.seglayer.data[0,93,167]
-    assert val == 111
+    val = epic.seglayer.data[0,80,130] # test in pixel, not scaled unit
+    assert val == 48 
     ## check that not touching labels do not merge
-    segedit.merge_labels( 0, 111, 134 )
-    val = epic.seglayer.data[0,93,167]
-    assert val == 111
-    segedit.merge_labels( 0, 111, 102 )
-    val = epic.seglayer.data[0,93,167]
+    segedit.merge_labels( 0, 48, 36 )
+    val = epic.seglayer.data[0,80,130]
+    assert val == 48
+    segedit.merge_labels( 0, 48, 40 )
+    val = epic.seglayer.data[0,80,130]
     ## new label because no propagation
-    assert val == 2844
+    assert val == 1296 
     
 
 def test_group():
-    test_img = os.path.join(".", "data_test", "003_crop.tif")
-    test_seg = os.path.join(".", "data_test", "003_crop_epyseg.tif")
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
+    test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
     viewer = napari.Viewer(show=False)
     epic = epi.EpiCure(viewer)
     epic.load_movie(test_img)
@@ -79,4 +80,8 @@ def test_group():
     assert "GroupTest" in epic.groups
     
 
+if __name__ == "__main__":
+    test_merge()
+    test_group()
+    print("********* Test editing cure completed ***********")
 
