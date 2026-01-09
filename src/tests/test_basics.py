@@ -3,12 +3,25 @@ import os
 import epicure.epicuring as epi
 
 def test_load_movie():
+    """ Read a standard tif movie """
     test_img = os.path.join(".", "test_data", "003_crop.tif")
     epic = epi.EpiCure()
     epic.load_movie(test_img)
     assert epic.img.shape == (11,189,212)
 
+def test_load_image():
+    """ Read a single image and a cellpose (labels) segmentation """
+    test_img = os.path.join(".", "test_data", "static_image.tif")
+    test_seg = os.path.join(".", "test_data", "static_image_cellpose.tif")
+    epic = epi.EpiCure()
+    epic.load_movie(test_img)
+    assert epic.img.shape == (1,507,585)
+    epic.load_segmentation(test_seg)
+    assert epic.seg.shape == epic.img.shape
+    assert np.max(epic.seg) == 706
+
 def test_load_movie_with_chanel():
+    """ Read a tif movie with 2 channels """
     test_img = os.path.join(".", "test_data", "area3_Composite.tif")
     test_seg = os.path.join(".", "test_data", "area3_Composite_epyseg.tif")
     epic = epi.EpiCure()
@@ -50,5 +63,6 @@ def test_init_epic():
 
 if __name__ == "__main__":
     test_load_movie()
+    test_load_image()
     test_suggest()
-    print("********* Test basics cure completed ***********")
+    print("********* Test basics completed ***********")

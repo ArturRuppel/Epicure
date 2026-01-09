@@ -276,9 +276,12 @@ def open_image(imagepath, get_metadata=False, verbose=True):
     image = img.data
     if verbose:
         print(f"Loaded image shape: {image.shape}")
-    if (img.dims.Z>1) and (img.dims.T == 1):
-        print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
-        image = np.swapaxes(image, 0, 2)
+    if (len(image.shape) == 5):
+        ## correct format of the image and metadata with TCZYX
+        if (img.dims is not None) and len(img.dims.shape)==5 :
+            if (img.dims.Z>1) and (img.dims.T == 1):
+                print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
+                image = np.swapaxes(image, 0, 2)
     image = np.squeeze(image)
         
     if not get_metadata:
