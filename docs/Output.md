@@ -1,14 +1,6 @@
 !!! abstract "Options to measure and export segmentation/events/tracks"
 	_Measurement and plotting options are/will be proposed here, as well as options to export the segmentation/measurements to use in other analysis softwares_
 
-* [Apply on: define current selection](#define-current-selection)
-* [Export to extern plugins](#export-to-other-plugins)
-* [Export segmentations](#save-segmentations)
-* [Export events](#export-events)
-* [Measure cell features](#measure-cell-features)
-* [Measure track features](#measure-track-features)
-
-
 ## Define current selection
 
 You can choose which cells to analyse/export with the `Apply on` option in the interface:
