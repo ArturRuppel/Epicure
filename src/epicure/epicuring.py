@@ -29,6 +29,10 @@ class EpiCure:
         if self.viewer is None:
             self.viewer = napari.Viewer(show=False)
         self.viewer.title = "Napari - EpiCure"
+        self.reset()
+
+    def reset(self):
+        """ Reset parameters """
         self.init_epicure_metadata()  ## initialize metadata variables (scalings, channels)
         self.img = None
         self.inspecting = None
@@ -39,7 +43,7 @@ class EpiCure:
         self.minsize = 4  ## smallest number of pixels in a cell
         self.verbose = 1  ## level of printing messages (None/few, normal, debug mode)
         self.event_class = ["division", "extrusion", "suspect"]  ## list of possible events
-
+        
         self.overtext = dict()
         self.help_index = 1  ## current display index of help overlay
         self.blabla = None  ## help window
@@ -60,6 +64,7 @@ class EpiCure:
         if "Display" in self.settings:
             if "Colors" in self.settings["Display"]:
                 self.display_colors = self.settings["Display"]["Colors"]
+
 
     def init_epicure_metadata(self):
         """Returns metadata to save"""
@@ -92,6 +97,7 @@ class EpiCure:
 
     def load_movie(self, imgpath):
         """Load the intensity movie, and get metadata"""
+        self.reset() ## reload everything 
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
         self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.open_image(
             self.epi_metadata["MovieFile"], get_metadata=True, verbose=self.verbose > 1
