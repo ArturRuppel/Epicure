@@ -423,7 +423,7 @@ class EpiCure:
             print("Activating key shortcuts on segmentation layer")
             print("Press <" + str(sg["show help"]["key"]) + "> to show/hide the main shortcuts")
             print("Press <" + str(sg["show all"]["key"]) + "> to show ALL shortcuts")
-        ut.setOverlayText(self.viewer, self.text, size=10)
+        ut.setOverlayText(self.viewer, self.text, size=12)
 
         @self.seglayer.bind_key(sg["show help"]["key"], overwrite=True)
         def switch_shortcuts(seglayer):
@@ -480,14 +480,14 @@ class EpiCure:
     def setGeneralOverlayText(self):
         """set overlay help message to general message"""
         text = self.text
-        ut.setOverlayText(self.viewer, text, size=10)
+        ut.setOverlayText(self.viewer, text, size=12)
 
     def setCurrentOverlayText(self):
         """Set overlay help text message to current selected options list"""
         text = self.text
         dispkey = list(self.overtext.keys())[self.help_index - 1]
         text += self.overtext[dispkey]
-        ut.setOverlayText(self.viewer, text, size=10)
+        ut.setOverlayText(self.viewer, text, size=12)
 
     def get_summary(self):
         """Get a summary of the infos of the movie"""

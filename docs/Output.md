@@ -12,19 +12,26 @@
 ## Define current selection
 
 You can choose which cells to analyse/export with the `Apply on` option in the interface:
+
 * `Only selected cell` will measure/export only the currently selected label/cell. Its value can be seen and modified in the left panel under `label`. You can select `show selected` option in that panel to see only this cell.
 * _`GroupName`_ will measure/export all the cells in the corresponding Group (that have beend defined with the `Edit>Group` options. To see which cells are in the group, you can select the option `see group cells` in the `Edit>Group` panel of Epicure.
 * `All cells` will measure/export all the cells in the `Segmentation` layer.
 
 ---
 
-## Export to other plugins
+## Export to TrackMate
 
-The output of EpiCure are also compatible with other Napari plugins, and this panel allows you to communicate directly with those plugins. It will open a new Napari window, with the corresponding plugin launched, and the necessary layer. You need to have these plugins already installed in Napari, or install them in the `Plugins` panel of Napari.
+The corrected segmentation/tracking can be exported as a [TrackMate](https://imagej.net/plugins/trackmate/) `.xml` file that can be directly loadded into TrackMate in Fiji as for any other TrackMate file.
 
-Currently, we propose direct export to:
-* [Griotte Napari plugin](https://www.napari-hub.org/plugins/napari-griottes) that allows to visualize/export the connectivity graphs between the cells.
-* [Cluster-Plotter Napari plugin](https://github.com/BiAPoL/napari-clusters-plotter) that allows to cluster objects based on their properties and interactive visualisation of the results.
+Select the option `Save as TrackMate XMl` and click on the `Save as TrackMate XML` to create this file. 
+Segmentation, tracking and divisions will be exported in the correct TrackMate format.
+
+You can then load it in `Fiji` with `TrackMate>Load a TrackMate file` and selecting the created `imagename.xml` file in `epics` folder. Don't move it or the input image to be sure that TrackMate will load them correctly.
+
+![trackmate export](./imgs/output_trackmate.png)
+
+!!! warning "Image with swapped Z and T"
+	In some cases, the image dimensions are not correctly set, and the temporal dimension is set as a Z-axis dimension. EpiCure should handle this case and print a warning on opening this image, but if you load the file with TrackMate from the exported `.xml` it's possible that the image dimensions will be uncorrect. In that case, all the segmentations will be overlaid on the first image. Then in Fiji you should swap them to have a temporal axis (`frames`) and not a Z axis (`slices`). 
 
 ---
 
@@ -45,7 +52,7 @@ The button `Save segmentation(s)` allows to save the label image of the segmente
 ### Save skeleton
 
 Allows to save the skeleton: the binary of the junctions, of the current selection (only selected cells, cells of a given group, or all cells). The file will be saved in the output folder.
-The skeleton can also be displayed by pressing <kbd>k>/kdb> when the segmentation layer is active.
+The skeleton can also be displayed by pressing <kbd>k</kdb> when the segmentation layer is active.
 
 ---
 
@@ -58,6 +65,16 @@ You can choose which type of events to export (suspect events, divisions, extrus
 Then choose the type of format to export the event.
 Currently, only `Fiji ROI` is proposed. It will save the list of events as `Fiji point ROI` in a `.zip` file which can be open in Fiji through the `ROI Manager`. This export format is also compatible with [`DeXtrusion`](https://gitlab.pasteur.fr/gletort/dextrusion) so that EpiCure can be used to create a training dataset for DeXtrusion.
 
+
+---
+## Export to other plugins
+
+The output of EpiCure are also compatible with other Napari plugins, and this panel allows you to communicate directly with those plugins. It will open a new Napari window, with the corresponding plugin launched, and the necessary layer. You need to have these plugins already installed in Napari, or install them in the `Plugins` panel of Napari.
+
+Currently, we propose direct export to:
+
+* [Griotte Napari plugin](https://www.napari-hub.org/plugins/napari-griottes) that allows to visualize/export the connectivity graphs between the cells.
+* [Cluster-Plotter Napari plugin](https://github.com/BiAPoL/napari-clusters-plotter) that allows to cluster objects based on their properties and interactive visualisation of the results.
 
 ---
 
@@ -163,3 +180,12 @@ If you need to measure a feature that is not yet present in this list, you can o
 	|Straightness|How straight is the trajectory: NetDisplacement/TotalDisplacement. A value of 1 means the track is linear (totally straight) while close to 0 the motion is very tortuous|
 	|Group|Group in which the cell Label is classified if any|
 
+---
+
+## Save screenshot movie
+
+This allows to save screenshots of the current display/current view (same part of the movie, same zoom...) for several consecutives frames.
+Choose the first and last frame of the screenshot movie and click on `save current view`.
+This will creates a `.tif` file in the `epics` folder containing the screenshots of the current view repeated on the given frames.
+
+![interface of screenshot movies](./imgs/output_screenshot.png)

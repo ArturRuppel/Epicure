@@ -5,16 +5,28 @@
 
 In the `Start EpiCure` step, you have a dedicated interface in the right part of the main interface.
 
-The first file to choose is the movie containing the epithelial staining, with th `image file` parameter. 
-It should be _2D(+time), .tif file_. 
+The first file to choose is the movie containing the epithelial staining, with the `image file` parameter. 
+It should be _2D(+time/channels) file_. 3D is not handled. If a file has a Z dimension and no temporal dimension, EpiCure will swap them and use the Z axis as time.  
 
 If the file contains several chanels, the plugin should detect it and show the `junction_chanel` parameter, to choose the chanel that contains the junction staining. The plugin will display only this chanel. If you wish to also see the other chanels, use the option `show other chanels` in the [advanced parameters](#advanced-parameters) panel.
 
-The second file is the segmentation of this movie (also a `.tif` file). It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
+The second file is the segmentation of this movie (it should only contain the segmentation), to select with the `segmentation file` parameter. It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
 
-_Note that if you haven't done the segmentation yet, there's an [additional option](#segment-with-epyseg) in EpiCure to directly run [EpySeg](https://github.com/baigouy/EPySeg) on the loaded movie._ 
+_Note that if you haven't done the segmentation yet, there's an [additional option](./Segment-option.md) in EpiCure to directly run [EpySeg](https://github.com/baigouy/EPySeg) on the loaded movie._ 
+
+If the input movie file had already been processed with EpiCure previously (and saved), EpiCure will automatically propose to load the saved file and reload the previous parameters. You can directly click `START CURE` in this case.
 
 ![start interface](./imgs/starting.png)
+
+## Movie metadata
+The information of pixel size in xy dimensions and of temporal resolution can be set with the scaling parameters:
+`scale xy` (the size of one pixel in the corresponding unit), `unit_xy` (which unit, usually `µm`), `timeframe` (the temporal resolution at which the movie is acquired) and `unit_t` (which unit for the temporal resolution).
+
+These scaling information is then used to display the movie with the correct sizes and export the measures in scaled units if the option is selected.
+
+Since version 1.3 of EpiCure, files are loaded with the [bioio](https://github.com/bioio-devs/bioio) python library, to support several formats.
+EpiCure reads the metadata of the input file with this library and fill the value of the scaling parameters of the interface. 
+Depending on python/module versions and the input file itself, all the information might not be correctly extracted, so we recommend to check these values to be sure that the movie will be properly scaled in EpiCure.
 
 ## Advanced parameters
 
@@ -22,9 +34,18 @@ _Note that if you haven't done the segmentation yet, there's an [additional opti
 
 `show other chanels` will display the other chanels of the original movie.
 
+`show scale bar` will display a scale bar overlaid on the movie. This can also be manually set by going in `Napari>View>Scale Bar>Scale Bar Visible`.
+
+`allow gaps`: allows tracks to have a few gaps (intermediate frames in which one label is not present, but reappear later).
+
 `epithelial cells`: EpiCure has been developed and optimized for epithelia movies, with jointive cells. However, you can still use it for non jointive cells by unselecting this option. Note that some options might not be usable in that case
 
 `process frames parallel`: if this is checked, some operations will be performed in parallel, processing multiple frames at the same time. The number of parallel threads run together is defined by the parameter `nbparallel_threads`, which is by default 75% of the computer's cpu numbers. 
 
 `verbose level` defines the amount of messages that are printed to the user. By default, some information or warning messages are shown. If this parameter is put to 0, very few messages will appear while if it's put to 3, a lot of information useful for debugging will be shown.
 
+## Using EpiCure without interface
+
+While EpiCure is optimized for a graphical usage as its scope relies on easing manual edition of segmentation, there's a possbility to launch it without starting Napari first (or at all).
+This can be useful for automatic testing or batching some process. 
+See our released [notebooks](https://github.com/gletort/Epicure/tree/main/notebooks/) for example of usage or our [test files](https://github.com/gletort/Epicure/tree/main/src/tests/). 
