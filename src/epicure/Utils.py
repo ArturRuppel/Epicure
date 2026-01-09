@@ -276,6 +276,9 @@ def open_image(imagepath, get_metadata=False, verbose=True):
     image = img.data
     if verbose:
         print(f"Loaded image shape: {image.shape}")
+    if (img.dims.Z>1) and (img.dims.T == 1):
+        print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
+        image = np.swapaxes(image, 0, 2)
     image = np.squeeze(image)
         
     if not get_metadata:
@@ -312,8 +315,6 @@ def open_image(imagepath, get_metadata=False, verbose=True):
     try:
         scale_t = img.scale.T
         unit_t = img.dimension_properties.T.unit
-        if (img.dims.Z) and (img.dims.T == 1):
-            print("Warning, movie had Z slices instead of T frames. EpiCure handles it but it might not be in other softwares/plugins")
     except:
         pass
 
