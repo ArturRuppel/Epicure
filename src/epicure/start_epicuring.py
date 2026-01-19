@@ -11,7 +11,38 @@ import multiprocessing
    Open the interface to select the movie and associated segmentation to process
 """
 
+def start_from_layers():
+    """ Start EpiCure from already opened image and segmentation layers """
+    from typing import Union
+    hist = get_save_history()
+    cdir = hist[0]
+
+    @magicgui(call_button="Use selected layers",)
+    def select_layer(movie: Union["napari.layers.Image", None], movie_path: pathlib.Path, segmentation: Union["napari.layers.Layer", None]):
+        """ GUI to choose the layers to use """
+        if movie == "None":
+            movie = None
+        segmented = segmentation
+        if segmentation == "None":
+            segmented = None
+        ut.remove_all_widgets(viewer)
+        #ut.remove_widget(viewer, "Start from opened layers")
+        start_epi, epicure_instance = gui_files(movie=movie, movie_path=movie_path, segmented=segmented)
+        viewer.window.add_dock_widget(start_epi)
+        return start_epi
+
+    viewer = current_viewer()
+    wid = viewer.window.add_dock_widget(select_layer)
+    return wid
+
+
 def start_epicure():
+    """ Start EpiCure from scratch """
+    gui, epicure = gui_files(movie=None, movie_path ="", segmented=None)
+    return gui
+
+def gui_files(movie=None, movie_path="", segmented=None):
+    """ GUI to choose files and parameters """
     hist = get_save_history()
     cdir = hist[0]
     viewer = current_viewer()
@@ -21,6 +52,15 @@ def start_epicure():
     ncpus = int(multiprocessing.cpu_count()*0.5)
 
     def set_visibility():
+        """ Visibility of the parameters in the GUI """
+        if movie is not None:
+            get_files.image_file.visible = False
+        if segmented is not None:
+            get_files.segmentation_file.visible = False
+            get_files.segment_with_epyseg.visible = False
+        advanced_visibility()
+
+    def advanced_visibility():
         """ Handle the visibility of the advanced parameters """
         get_files.output_dirname.visible = get_files.advanced_parameters.value
         get_files.show_other_chanels.visible = get_files.advanced_parameters.value
@@ -31,6 +71,43 @@ def start_epicure():
         get_files.allow_gaps.visible = get_files.advanced_parameters.value
         get_files.show_scale_bar.visible = get_files.advanced_parameters.value
         get_files.epithelial_cells.visible = get_files.advanced_parameters.value
+
+    def load_movie_from_layers(movie, movie_path, segmented):
+        """ Load and display the selected layers """
+        start_time = ut.start_time()
+        nonlocal caxis, cval
+        caxis, cval = Epic.movie_from_layer(movie, movie_path)
+        imgdir = ut.get_directory(movie_path)
+        
+        if segmented is None:
+            get_files.segmentation_file.visible = True
+            get_files.segmentation_file.value = pathlib.Path(imgdir)
+            get_files.segment_with_epyseg.visible = True
+        
+        labname = Epic.suggest_segfile( get_files.output_dirname.value )
+        Epic.set_names( get_files.output_dirname.value )
+        if labname is not None:
+            get_files.segmentation_file.value = pathlib.Path(labname)
+            Epic.read_epicure_metadata()    
+        if caxis is not None:
+            get_files.junction_chanel.max = cval-1
+            get_files.junction_chanel.visible = True
+            set_chanel()
+        show_metatdata(show=True)
+        get_files.allow_gaps.value = bool(Epic.epi_metadata["Allow gaps"])
+        get_files.verbose_level.value = int(Epic.epi_metadata["Verbose"])
+        get_files.call_button.enabled = True
+
+    def show_metatdata(show=True):
+        """ Show or update the metadata parameters """
+        get_files.scale_xy.value = Epic.epi_metadata["ScaleXY"]
+        get_files.timeframe.value = Epic.epi_metadata["ScaleT"]
+        get_files.unit_xy.value = Epic.epi_metadata["UnitXY"]
+        get_files.unit_t.value = Epic.epi_metadata["UnitT"]
+        get_files.scale_xy.visible = show 
+        get_files.unit_xy.visible = show
+        get_files.timeframe.visible = show 
+        get_files.unit_t.visible = show 
 
     def load_movie():
         """ Load and display the selected movie """
@@ -50,14 +127,7 @@ def start_epicure():
             get_files.junction_chanel.max = cval-1
             get_files.junction_chanel.visible = True
             set_chanel()
-        get_files.scale_xy.value = Epic.epi_metadata["ScaleXY"]
-        get_files.timeframe.value = Epic.epi_metadata["ScaleT"]
-        get_files.unit_xy.value = Epic.epi_metadata["UnitXY"]
-        get_files.unit_t.value = Epic.epi_metadata["UnitT"]
-        get_files.scale_xy.visible = True
-        get_files.unit_xy.visible = True
-        get_files.timeframe.visible = True
-        get_files.unit_t.visible = True
+        show_metatdata(show=True)
         get_files.segment_with_epyseg.visible = True
         get_files.allow_gaps.value = bool(Epic.epi_metadata["Allow gaps"])
         get_files.verbose_level.value = int(Epic.epi_metadata["Verbose"])
@@ -100,9 +170,12 @@ def start_epicure():
 
     @magicgui(call_button="START CURE",
             junction_chanel={"widget_type": "Slider", "min":0, "max": 0},
-            segment_with_epyseg = {"widget_type": "PushButton", "label": "Segment now with EpySeg"},
+            _ = {"widget_type": "Label"},
             scale_xy = {"widget_type": "LiteralEvalLineEdit"},
             timeframe = {"widget_type": "LiteralEvalLineEdit"},
+            __ = {"widget_type": "Label"},
+            segment_with_epyseg = {"widget_type": "PushButton", "label": "Segment now with EpySeg"},
+            ___ = {"widget_type": "Label"},
             junction_half_thickness={"widget_type": "LiteralEvalLineEdit"},
             nbparallel_threads = {"widget_type": "LiteralEvalLineEdit"},
             verbose_level={"widget_type": "Slider", "min":0, "max": 3},
@@ -110,12 +183,15 @@ def start_epicure():
     def get_files( 
                    image_file = pathlib.Path(cdir),
                    junction_chanel = 0,
-                   segmentation_file = pathlib.Path(cdir),
-                   segment_with_epyseg = False,
+                   _ = "Image metadata",
                    scale_xy = 1,
                    unit_xy = "um",
                    timeframe = 1,
                    unit_t = "min",
+                   __ = "Segmentation",
+                   segmentation_file = pathlib.Path(cdir),
+                   segment_with_epyseg = False,
+                   ___ = "",
                    advanced_parameters = False,
                    show_other_chanels = True,
                    show_scale_bar = True,
@@ -127,7 +203,7 @@ def start_epicure():
                    output_dirname = "epics",
                    verbose_level = 1,
                    ):
-        
+
         print("Starting")
         imname, imdir, outdir = ut.extract_names( image_file, output_dirname )
         update_save_history(imdir)
@@ -143,8 +219,13 @@ def start_epicure():
         Epic.set_scalebar( show_scale_bar )
         Epic.set_gaps_option( allow_gaps )
         Epic.set_epithelia( epithelial_cells )
-        Epic.go_epicure(outdir, segmentation_file)
+        ## to handle segmentation from layer or from file
+        segmentation_input = {"File":segmentation_file} 
+        if segmented is not None:
+            segmentation_input["Layer"]=segmented
 
+        Epic.go_epicure(outdir, segmentation_input)
+    
     set_visibility()
     get_files.call_button.enabled = False
     get_files.segmentation_file.visible = False
@@ -153,11 +234,17 @@ def start_epicure():
     get_files.unit_xy.visible = False
     get_files.timeframe.visible = False
     get_files.unit_t.visible = False
+    if movie is not None:
+        load_movie_from_layers(movie, movie_path, segmented)
+        get_files.image_file.value = movie_path
+        show_metatdata(show=True)
+        if segmented is not None:
+            get_files.call_button.enabled = True
     get_files.junction_chanel.visible = False
     get_files.advanced_parameters.clicked.connect(set_visibility)
     get_files.show_other_chanels.clicked.connect(show_others)
     get_files.image_file.changed.connect(load_movie)
     get_files.junction_chanel.changed.connect(set_chanel)
     get_files.segment_with_epyseg.clicked.connect( launch_napari_epyseg )
-    return get_files
+    return get_files, Epic
 

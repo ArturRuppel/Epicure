@@ -94,6 +94,42 @@ class EpiCure:
     def set_thickness(self, thick):
         """Thickness of junctions (half thickness)"""
         self.thickness = thick
+    
+    def movie_from_layer(self, layer, imgpath):
+        """Prepare the intensity movie from opened layer, and get metadata"""
+        self.reset() ## reload everything 
+        self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
+        self.img = layer.data
+        nchan = 0
+        if len(self.img.shape)>3:
+            ## Format TCYX in general
+            nchan = self.img.shape[1]
+        ## transform static image to movie (add temporal dimension)
+        if len(self.img.shape) == 2:
+            self.img = np.expand_dims(self.img, axis=0)
+        caxis = None
+        cval = 0
+        if nchan > 0 or len(self.img.shape) > 3:
+            if nchan > 0 and len(self.img.shape) > 3:
+                ## multiple chanels and multiple slices, order axis should be TCXY
+                caxis = 1
+                cval = nchan
+            else:
+                ## one image with multiple chanels
+                minshape = min(self.img.shape)
+                caxis = self.img.shape.index(minshape)
+                cval = minshape
+            self.mov = self.img
+
+        ## display the movie: rename the layer
+        ut.remove_layer(self.viewer, "Movie")
+        layer.name = "Movie"
+
+        self.imgshape = self.viewer.layers["Movie"].data.shape
+        self.imgshape2D = self.imgshape[1:3]
+        self.nframes = self.imgshape[0]
+        return caxis, cval
+
 
     def load_movie(self, imgpath):
         """Load the intensity movie, and get metadata"""
@@ -208,11 +244,17 @@ class EpiCure:
                 mview.gamma=0.95
                 mview.visible = False
 
-    def load_segmentation(self, segpath):
+    def load_segmentation(self, seg_input):
         """Load the segmentation file"""
         start_time = ut.start_time()
+        segpath = seg_input["File"]
         self.epi_metadata["SegmentationFile"] = segpath
-        self.seg, _, _, _, _, _ = ut.open_image(segpath, get_metadata=False, verbose=self.verbose > 1)
+        if "Layer" in seg_input:
+            ## take the segmentation data and close it
+            self.seg = seg_input["Layer"].data
+            ut.remove_layer(self.viewer, seg_input["Layer"])
+        else:
+            self.seg, _, _, _, _, _ = ut.open_image(segpath, get_metadata=False, verbose=self.verbose > 1)
         self.seg = np.uint32(self.seg)
         ## transform static image to movie (add temporal dimension)
         if len(self.seg.shape) == 2:
@@ -289,17 +331,18 @@ class EpiCure:
         """Extract default names from imgpath"""
         self.imgname, self.imgdir, self.outdir = ut.extract_names(self.epi_metadata["MovieFile"], outdir, mkdir=True)
 
-    def go_epicure(self, outdir="epics", segmentation_file=None):
+    def go_epicure(self, outdir="epics", segmentation_input=None):
         """Initialize everything and start the main widget"""
         self.set_names(outdir)
-        if segmentation_file is None:
-            segmentation_file = self.suggest_segfile(outdir)
+        if segmentation_input is None:
+            segmentation_input = {}
+            segmentation_input["File"] = self.suggest_segfile(outdir)
         self.viewer.window._status_bar._toggle_activity_dock(True)
         progress_bar = progress(total=5)
         progress_bar.set_description("Reading segmented image")
         ## load the segmentation
-        self.load_segmentation(segmentation_file)
-        self.epi_metadata["SegmentationFile"] = segmentation_file
+        self.load_segmentation(segmentation_input)
+        self.epi_metadata["SegmentationFile"] = segmentation_input["File"]
         progress_bar.update(1)
         ut.set_active_layer(self.viewer, "Segmentation")
 
