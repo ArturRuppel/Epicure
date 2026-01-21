@@ -348,7 +348,10 @@ class EpiCure:
         progress_bar.set_description("Reading segmented image")
         ## load the segmentation
         self.load_segmentation(segmentation_input)
-        self.epi_metadata["SegmentationFile"] = segmentation_input["File"]
+        if isinstance(segmentation_input, dict):
+            self.epi_metadata["SegmentationFile"] = segmentation_input["File"]
+        else:
+            self.epi_metadata["SegmentationFile"] = segmentation_input
         progress_bar.update(1)
         ut.set_active_layer(self.viewer, "Segmentation")
 
