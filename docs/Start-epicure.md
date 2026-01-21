@@ -1,6 +1,9 @@
 !!! abstract "Start EpiCure: load the movies and metadata"
     _Choose `Start epicure` in Napari `Plugins>Epicure` to open it._ 
 
+EpiCure handles several inputs format through the `bioio` module.
+However, if some format is not correctly recongized/handled by EpiCure, you can open the images in Napari with any other plugin (for example [napari-bioformats](https://github.com/tlambert03/napari-bioformats), [napari-aicsimageio](https://github.com/AllenCellModeling/napari-aicsimageio)) and use the `Start from open layers` option (see more [here](#start-from-opened-layers)).
+
 ## Loading the movies
 
 In the `Start EpiCure` step, you have a dedicated interface in the right part of the main interface.
@@ -49,3 +52,22 @@ Depending on python/module versions and the input file itself, all the informati
 While EpiCure is optimized for a graphical usage as its scope relies on easing manual edition of segmentation, there's a possbility to launch it without starting Napari first (or at all).
 This can be useful for automatic testing or batching some process. 
 See our released [notebooks](https://github.com/gletort/Epicure/tree/main/notebooks/) for example of usage or our [test files](https://github.com/gletort/Epicure/tree/main/src/tests/). 
+
+## Start from opened layers
+
+To make EpiCure compatible with as many input formats as possible, we added the option to start it from already opened layers, so that the images can be opened with other readers than the one proposed in EpiCure if necessary.
+
+Both the raw image and the segmentation can be opened before to start EpiCure, or only the raw image.
+
+In `Plugins>EpiCure`, choose the option `Start from opened layers`.
+
+In the parameters interface that open on the right side of the viewer, select the layer that corresponds to your raw movie (the layer containing the junction staining) in the `movie` parameter.
+
+Select the raw file of the movie in the `movie path` parameter. 
+This will not open it as it is already opened, but is necessary to know the path and name of the image to save correspondingly the output files.
+
+Select the layer containing the segmentation in the `segmentation` parameter if you have one, or select `None` otherwise.
+
+![interface to start Epicure from open layers](./imgs/start_from_layers.png)
+
+Once the parameters are properly filled, click `Use selected layers` and you will be back to the "normal" EpiCure starting interface to choose the main parameters of your analysis.

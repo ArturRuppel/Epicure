@@ -99,6 +99,8 @@ class EpiCure:
         """Prepare the intensity movie from opened layer, and get metadata"""
         self.reset() ## reload everything 
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
+        ## if the layer is scaled, should be the right scale
+        self.epi_metadata["ScaleXY"] = layer.scale[2]
         self.img = layer.data
         nchan = 0
         if len(self.img.shape)>3:
