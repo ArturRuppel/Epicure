@@ -249,9 +249,13 @@ class EpiCure:
     def load_segmentation(self, seg_input):
         """Load the segmentation file"""
         start_time = ut.start_time()
-        segpath = seg_input["File"]
+        ## compatibility to string input, the path to the image or a dictionnary
+        if isinstance(seg_input, dict):
+            segpath = seg_input["File"]
+        else:
+            segpath = seg_input
         self.epi_metadata["SegmentationFile"] = segpath
-        if "Layer" in seg_input:
+        if isinstance(seg_input, dict) and "Layer" in seg_input:
             ## take the segmentation data and close it
             self.seg = seg_input["Layer"].data
             ut.remove_layer(self.viewer, seg_input["Layer"])

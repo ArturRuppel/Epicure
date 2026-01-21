@@ -105,4 +105,5 @@ def test_load_from_layers():
     
 if __name__ == "__main__":
     test_load_from_layers()
+    test_load_image()
     print("********* Test basics completed ***********")
