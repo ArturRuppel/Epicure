@@ -70,4 +70,4 @@ Select the layer containing the segmentation in the `segmentation` parameter if 
 
 ![interface to start Epicure from open layers](./imgs/start_from_layers.png)
 
-Once the parameters are properly filled, click `Use selected layers` and you will be back to the "normal" EpiCure starting interface to choose the main parameters of your analysis.
+Once the parameters are properly filled, click `Use selected layers` and you will be back to the "normal" EpiCure [starting interface](#movie-metadata) to check the image metadata and choose the main parameters of your analysis.
