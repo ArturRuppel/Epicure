@@ -34,6 +34,45 @@ def test_output_selected():
         os.remove(roi_file)
     output.save_segmentation()
     assert os.path.exists(roi_file)
+    
+def test_measure_vertices():
+    """ Find the vertices (TCJ) and measure their intensity and nb of neighbors """
+
+    test_img = os.path.join(".", "test_data", "area3_Composite.tif")
+    test_seg = os.path.join(".", "test_data", "area3_Composite_epyseg.tif")
+    viewer = napari.Viewer(show=False)
+    epic = epi.EpiCure(viewer)
+    resaxis, resval = epic.load_movie(test_img)
+    epic.set_chanel(1, 1)
+    assert epic.viewer is not None
+    epic.go_epicure("test_epics", test_seg)
+
+    output = epic.outputing
+    assert output is not None
+
+    # Default vertex sizes
+    output.vertice_radius.setText("1.25")
+    output.measure_vertices()
+    assert "Vertices" in viewer.layers
+    vertices = viewer.layers["Vertices"].data
+    frame = 1
+    props = ut.binary_properties(vertices[frame])
+    nvertex = len(props)
+    assert nvertex > 150
+    assert nvertex < 250
+    nneigh = np.array((output.table["nb_neighbors"]))
+    ## Nb of neighbor shuold in majority 3, and between 2 and 6-ish max
+    assert np.min(nneigh>=2)
+    assert np.max(nneigh<=6)
+    assert np.floor(np.median(nneigh)) == 3
+
+    ## Take bigger vertex: merge neighboring ones
+    output.vertice_radius.setText("4")
+    output.measure_vertices()
+    vertices = viewer.layers["Vertices"].data
+    props = ut.binary_properties(vertices[frame])
+    assert len(props)>100
+    assert len(props)<nvertex
 
 def test_measure_events():
     """ Measure/export of events """
@@ -54,5 +93,6 @@ def test_measure_events():
 
 if __name__ == "__main__":
     #test_output_selected()
-    test_measure_events()
+    #test_measure_events()
+    test_measure_vertices()
     print("********* Test outputs cure completed ***********")
