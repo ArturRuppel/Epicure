@@ -6,6 +6,9 @@ contributions:
     - id: epicure.start
       python_name: epicure.start_epicuring:start_epicure
       title: Start
+    - id: epicure.start_from_layers
+      python_name: epicure.start_epicuring:start_from_layers
+      title: Start from opened layers
     - id: epicure.concatenate
       python_name: epicure.concatenate_movie:concatenate_movies
       title: Concatenate
@@ -18,6 +21,8 @@ contributions:
   widgets:
     - command: epicure.start
       display_name: Start EpiCure
+    - command: epicure.start_from_layers
+      display_name: Start from opened layer(s)
     - command: epicure.concatenate
       display_name: Concatenate EpiCured movies
     - command: epicure.doc

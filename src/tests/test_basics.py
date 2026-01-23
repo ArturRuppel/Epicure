@@ -1,6 +1,10 @@
 import numpy as np
 import os
 import epicure.epicuring as epi
+import napari
+import epicure.Utils as ut
+from epicure.start_epicuring import gui_files
+
 
 def test_load_movie():
     """ Read a standard tif movie """
@@ -69,8 +73,37 @@ def test_init_epic():
     assert epic.img is None
     return
 
+def test_load_from_layers():
+    """ Open a new EpiCure project from opened layers """
+    viewer = napari.Viewer(show=False)
+    test_img = os.path.join(".", "test_data", "003_crop.tif")
+    img, _, _, _, _, _ = ut.open_image(test_img, get_metadata=False, verbose=0)
+    movie_layer = viewer.add_image(img, name="TestImage")
+    ## if initiliaze without segmentation, propose option to choose/do segmentation in the interface
+    widget, epic = gui_files(movie_layer, test_img, None)
+    assert (os.path.abspath(widget.segmentation_file.value)==os.path.abspath(os.path.join(".", "test_data")))
+    ## loading of movie has worked
+    assert "Movie" in viewer.layers
+    ## load also segmentation from open layers
+    ## reset
+    ut.remove_layer(viewer, "Movie")
+    movie_layer = viewer.add_image(img, name="TestImage")
+    test_seg = os.path.join(".", "test_data", "003_crop_epyseg.tif")
+    seg, _, _, _, _, _ = ut.open_image(test_seg, get_metadata=False, verbose=0)
+    seg_layer = viewer.add_labels(seg, name="TestSegmentation")
+    widget, epic = gui_files(movie_layer, test_img, seg_layer)
+    assert "Movie" in viewer.layers
+    ## launch epicure with the given layers
+    widget.call_button.clicked(False)
+    ## check that it was properly loaded
+    assert "Segmentation" in viewer.layers
+    assert epic.imgshape2D == img.shape[1:]
+    assert epic.nframes == img.shape[0]
+    assert epic.nlabels() == 1294
+    assert os.path.abspath(epic.outdir) == os.path.abspath(os.path.join(".", "test_data", "epics"))
+    #viewer.show() # manual check
+    
 if __name__ == "__main__":
-    test_load_movie()
+    test_load_from_layers()
     test_load_image()
-    test_suggest()
     print("********* Test basics completed ***********")

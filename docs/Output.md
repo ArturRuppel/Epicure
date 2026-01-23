@@ -1,14 +1,6 @@
 !!! abstract "Options to measure and export segmentation/events/tracks"
 	_Measurement and plotting options are/will be proposed here, as well as options to export the segmentation/measurements to use in other analysis softwares_
 
-* [Apply on: define current selection](#define-current-selection)
-* [Export to extern plugins](#export-to-other-plugins)
-* [Export segmentations](#save-segmentations)
-* [Export events](#export-events)
-* [Measure cell features](#measure-cell-features)
-* [Measure track features](#measure-track-features)
-
-
 ## Define current selection
 
 You can choose which cells to analyse/export with the `Apply on` option in the interface:
@@ -189,3 +181,21 @@ Choose the first and last frame of the screenshot movie and click on `save curre
 This will creates a `.tif` file in the `epics` folder containing the screenshots of the current view repeated on the given frames.
 
 ![interface of screenshot movies](./imgs/output_screenshot.png)
+
+## Measure vertices
+
+Find the vertices, points of junction of several cells (Tri-Cellular junctions or more), display it and measure intensity of the raw movie channel and the number of cells joining (the connectivity) at each vertex.
+
+Choose the option `measure vertices` to launch it.
+
+The parameter `vertex_radius` set the radius of a vertex, to find it (depending on the resolution, it can be bigger than a single pixel) and to measure the intensity inside the vertex (you might want to measure in a small circle rather than in only one point).
+
+The parameter `vertex_display` set the radius at which each point is displayed in the viewer.
+
+Click on `Measure` to launch the detection of vertices and their measures. It can take a few minutes.
+
+When it's finished, it will display a new layer, called "Vertices" that contained the defined vertices, colored by their connectivity measure (number of cells joining in this point) and of a size controlled by the `vertex_display` parameter (and not the one used for measurement, for clarity of visualization).
+
+The measures of each vertex position, connectivity (nb of neighbor cell joining) and intensity in the raw movie channel (the junction channel) are displayed in a table in the right side of the interface that can be saved for further analysis on the vertices connectivity or intensity distributions.
+
+![interface of vertices measurement](./imgs/output_vertices.png)

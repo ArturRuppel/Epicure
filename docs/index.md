@@ -13,6 +13,11 @@ You can launch `EpiCure` in Napari by going to `Plugins>epicure>Start`. It will 
 The first file to choose is the movie containing the epithelial staining. 
 It should be _2D(+time/channel) file_. 
 
+!!! Note "Input format" 
+	EpiCure relies on `bioio` module to open images, compatible with various formats.
+	Note that if your file format is not correctly handled by EpiCure, you can first open the image with other plugins and start EpiCure from the opened layer(s). See [Start EpiCure page](./Start-epicure.md#start-from-opened-layers) for more details.
+
+
 The second file is the segmentation of this movie (it should contain only the segmentation). It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
 _Note that if you haven't done the segmentation yet, there's an [additional option](./Segment-option.md) in EpiCure to directly run [EpySeg](https://github.com/baigouy/EPySeg) on the loaded movie._ 
 

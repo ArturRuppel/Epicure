@@ -6,7 +6,7 @@ import numpy as np
 import os, sys
 import time
 import math
-from skimage.measure import regionprops, find_contours, regionprops_table
+from skimage.measure import label, regionprops, find_contours, regionprops_table
 from skimage.segmentation import find_boundaries, expand_labels
 from napari.utils.translations import trans # type: ignore
 from napari.utils.notifications import show_info # type: ignore
@@ -17,6 +17,8 @@ from scipy.ndimage import label as ndlabel
 from scipy.ndimage import binary_opening as ndbinary_opening
 from scipy.ndimage import sum as ndsum
 from scipy.ndimage import generate_binary_structure as ndi_structure
+from scipy import signal
+from skimage.morphology import medial_axis
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
 from bioio import BioImage
@@ -406,6 +408,32 @@ def copy_border( skel, bin ):
     skel[[0, -1], :] = bin[[0, -1], :]  # top and bottom borders
     skel[:, [0, -1]] = bin[:, [0, -1]]  # left and right borders
     return skel
+
+def draw_points(pts, imshape, radius):
+    """ Draw circle (2D) around the given points in 2D image """  
+    image = np.zeros(imshape, dtype=bool)
+    y, x = np.ogrid[:imshape[0], :imshape[1]]
+    for pt in pts:
+        # Calculate distance from pt, scaled to compare to radius
+        distances_sq = ((y - pt[0]))**2 + ((x - pt[1]))**2 
+        image |= distances_sq <= radius**2
+    return image
+
+def get_vertices(seg, viewer=None, verbose=0, parallel=0):
+    """ Get the vertices of the segmentation """
+    skeleton = get_skeleton(seg, viewer, verbose, parallel)
+    convfilter = np.array([[-1,-1,-1], [-1,3,-1],[-1,-1,-1]])
+    novert = np.zeros(skeleton.shape, dtype=np.int8)
+    ## pure skeleton
+    for ind, skel in enumerate(skeleton):
+        skeleton[ind] = medial_axis(skel)
+        novert[ind] = signal.convolve2d(skeleton[ind], convfilter, mode="same")
+    novert[novert<=0] = 0
+    nodeimg = skeleton - novert
+    nodeimg[nodeimg<=0] = 0
+    nodeimg[nodeimg>0] = 1 
+    return nodeimg 
+
     
 def get_skeleton( seg, viewer=None, verbose=0, parallel=0 ) :
     """ convert labels movie to skeleton (thin boundaries) """
@@ -889,6 +917,10 @@ def get_most_frequent( labimg, img, label ):
     mask = labimg == label
     vals, counts = np.unique( img[mask], return_counts=True )
     return vals[ np.argmax(counts) ]
+
+def binary_properties( labimg ):
+    """ Returns basic label properties """
+    return regionprops( label(labimg) )
 
 def labels_properties( labimg ):
     """ Returns basic label properties """

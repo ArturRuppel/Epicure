@@ -1,7 +1,8 @@
 import pandas as pand
 import numpy as np
 import roifile
-from skimage.morphology import binary_erosion, disk
+from skimage.morphology import binary_erosion, disk, binary_dilation
+from skimage.measure import label
 import os, time
 import napari
 from napari.utils import progress
@@ -11,7 +12,6 @@ from epicure.trackmate_export import save_trackmate_xml
 import plotly.express as px
 from qtpy import QtCore
 from qtpy.QtCore import Qt
-
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts, True)  ## for QtWebEngine import to work on some computers
 from qtpy.QtWebEngineWidgets import QWebEngineView 
 from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QGridLayout, QListWidget
@@ -31,7 +31,7 @@ class Outputing(QWidget):
         self.seglayer = self.viewer.layers["Segmentation"]
         self.movlayer = self.viewer.layers["Movie"]
         self.selection_choices = ["All cells", "Only selected cell"]
-        self.output_options = ["", "Export to extern plugins", "Export segmentations", "Measure cell features", "Measure track features", "Export/Measure events", "Save as TrackMate XML", "Save screenshot movie"]
+        self.output_options = ["", "Export to extern plugins", "Export segmentations", "Measure cell features", "Measure track features", "Export/Measure events", "Save as TrackMate XML", "Save screenshot movie", "Measure vertices"]
         self.tplots = None
         
         chanlist = ["Movie"]
@@ -125,19 +125,6 @@ class Outputing(QWidget):
         self.trackfeat_group.hide()
         all_layout.addWidget(self.trackfeat_group)
 
-        ## Track features
-        self.trackfeat_group, trackfeatlayout = wid.group_layout(self.output_options[4])
-        self.trackfeat_table = wid.add_button( "Track features table", self.show_trackfeature_table, "Measure track-related feature and show a table by track" )
-        trackfeatlayout.addWidget(self.trackfeat_table)
-        self.trackTable = FeaturesTable(self.viewer, self.epicure)
-        trackfeatlayout.addWidget(self.trackTable)
-        self.save_table_track = wid.add_button( "Save track table", self.save_table_tracks, "Save the current table in a .csv file" )
-        trackfeatlayout.addWidget(self.save_table_track)
-        
-        self.trackfeat_group.setLayout(trackfeatlayout)
-        self.trackfeat_group.hide()
-        all_layout.addWidget(self.trackfeat_group)
-
         ## Option to export/measure events (Fiji ROI or table), + graphs ?
         self.handle_event_group, elayout = wid.group_layout(self.output_options[5])
         self.choose_events_btn = wid.add_button( "Choose events...", self.choose_events, "Open a window to select the events to export/measure" )
@@ -177,7 +164,22 @@ class Outputing(QWidget):
         all_layout.addWidget(self.screenshot_group)
         self.screenshot_group.hide()
         
-
+        ## Measure vertex options
+        self.vertex_group, vertices_layout = wid.group_layout( "Measure vertices" )
+        radius_line, self.vertice_radius = wid.value_line("Vertex radius", "1.25", descr="Radius of a vertex (TCJ) to consider as one point and measure intensities")
+        display_radius_line, self.vertice_display_radius = wid.value_line("Display radius", "3", descr="Radius of a vertex for DISPLAY only (size of drawing in the layer)")
+        vertices_layout.addLayout(radius_line)
+        vertices_layout.addLayout(display_radius_line)
+        self.vertices_btn = wid.add_button( "Measure", self.show_vertices_table, "Measure the vertices (connectivity, intensity)" )
+        vertices_layout.addWidget( self.vertices_btn )
+        self.verticesTable = FeaturesTable(self.viewer, self.epicure)
+        vertices_layout.addWidget(self.verticesTable)
+        self.save_table_vertices = wid.add_button( "Save vertices table", self.save_vertices_table, "Save the current table in a .csv file" )
+        vertices_layout.addWidget(self.save_table_vertices)
+        
+        self.vertex_group.setLayout( vertices_layout )
+        all_layout.addWidget(self.vertex_group)
+        self.vertex_group.hide()
         
         ## Finished
         self.setLayout(all_layout)
@@ -240,6 +242,7 @@ class Outputing(QWidget):
         self.export_group.setVisible( cur_option == "Export to extern plugins" )
         self.export_seg_group.setVisible( cur_option == "Export segmentations" )
         self.feature_group.setVisible( cur_option == "Measure cell features" )
+        self.vertex_group.setVisible( cur_option == "Measure vertices" )
         self.trackfeat_group.setVisible( cur_option == "Measure track features" )
         self.handle_event_group.setVisible( cur_option == "Export/Measure events" )
         self.save_tm_group.setVisible( cur_option == "Save as TrackMate XML" )
@@ -404,6 +407,90 @@ class Outputing(QWidget):
     def choose_features( self ):
         """ Pop-up widget to choose the features to measure """
         self.cell_features.choose()
+    
+    def show_vertices_table(self):
+        """ Show the measurement of vertices table """
+        self.measure_vertices()
+        self.verticesTable.set_table(self.table)
+    
+    def save_vertices_table(self):
+        """ Save vertices table to file whether it was created or not """
+        if self.table is None:
+            ut.show_warning("Create/update the table before")
+            return
+        outfile = self.epicure.outname()+"_vertices"+".xlsx"
+        self.table.to_excel( outfile, sheet_name='EpiCureVerticesMeasures' )
+        if self.epicure.verbose > 0:
+            ut.show_info("Vertices measures saved in "+outfile)
+
+
+    def measure_vertices(self):
+        """ Get all vertices (TCJ) and measure their properties """
+        def nb_neighbors(regionmask, labimg):
+            """ Measure the nb of neighbors (labels) around each point """
+            #footprint = disk(radius=8)
+            #dilated = binary_dilation(regionmask, footprint)
+            labels = np.unique(labimg[regionmask]).tolist()
+            nb_nei = len(labels)
+            if 0 in labels:
+                nb_nei = nb_nei - 1
+            return nb_nei 
+
+        self.table = None
+        radius = float(self.vertice_radius.text()) 
+        display_radius = float(self.vertice_display_radius.text()) 
+        ## difference between the measured radius and the displayed radius
+        diff_radius = display_radius - radius
+        if diff_radius < 0:
+            diff_radius = 0
+        parallel = 0
+        if self.epicure.process_parallel:
+            parallel = self.epicure.nparallel
+        ## Get the vertices: junctions of several skeleton lines
+        vertex_img = ut.get_vertices( self.epicure.seg, viewer=None, verbose=self.epicure.verbose, parallel=parallel )
+        vertices_img = np.zeros(vertex_img.shape, dtype=np.int8)
+        ## Individualise, measure, draw
+        for ind, frame in enumerate(vertex_img):
+            props = ut.binary_properties(frame)
+            nvertex = len(props)
+            vertices = []
+            for prop in props:
+                if prop.label > 0:
+                    pt = prop.centroid
+                    vertices.append(pt)
+            vert_img = ut.draw_points(vertices, vertex_img.shape[1:], radius=radius)
+            props = ut.binary_properties(vert_img)
+            if nvertex != len(props):
+                ## one or more vertices had been merged
+                vertices = []
+                for prop in props:
+                    if prop.label > 0:
+                        pt = prop.centroid
+                        vertices.append(pt)
+                vert_img = ut.draw_points(vertices, vertex_img.shape[1:], radius=radius)
+            #vertices_img[ind] = vert_img
+            lbl_img = label(vert_img)
+            int_measures = pand.DataFrame(ut.regionprops_table(lbl_img, self.movlayer.data[ind], properties=["label", "centroid", "intensity_mean"]))
+            ## expand to measure neighbors
+            exp_lbl = ut.touching_labels(lbl_img, expand=3)
+            measures = pand.DataFrame(ut.regionprops_table(exp_lbl, self.epicure.seg[ind], properties=["label"], extra_properties=[nb_neighbors] ))
+            ## Color the vertices by their number of neighbors
+            for lab in measures["label"]:
+                vertices_img[ind][lbl_img==lab] = int(measures.loc[measures["label"]==lab,"nb_neighbors"].iloc[0])
+            df = pand.merge(int_measures, measures, on="label", how="inner")
+            df["Frame"] = ind
+            
+            if self.table is None:
+                self.table = df
+            else:
+                self.table = pand.concat([self.table, df])
+
+            ## Expand for display only
+            vertices_img[ind] = ut.touching_labels(vertices_img[ind], expand=diff_radius)
+
+        ## Display the vertices in a new layer
+        ut.remove_layer(self.viewer, "Vertices") # in case already present
+        self.viewer.add_labels(vertices_img, blending="additive", name="Vertices",  scale=self.viewer.layers["Movie"].scale, opacity=1)
 
     def measure_features(self):
         """ Measure features and put them to table """
@@ -481,9 +568,9 @@ class Outputing(QWidget):
                 frame_table["Border"] = frame_table["label"].isin(bds).astype(int)
             
             # Intensity features in other channels
-            for chan, intimg_chan in chan_dict:
+            for chan, intimg_chan in chan_dict.items():
                 intimg_frame = intimg_chan[frame]
-                frame_tab = ut.labels_table(img, intensity_image=intimg_frame, properties=int_feat, extra_properties=int_extrafeat)
+                frame_tab = ut.labels_table(img, intensity_image=intimg_frame, properties=int_feat, extra_properties=extra_prop)
                 for add_prop in int_feat:
                     frame_table[add_prop+"_"+str(chan)] = frame_tab[add_prop]
                 if "intensity_junction_cytoplasm-0" in frame_tab.keys():
