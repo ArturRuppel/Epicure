@@ -74,6 +74,48 @@ def test_measure_vertices():
     assert len(props)>100
     assert len(props)<nvertex
 
+def test_measure_intensities():
+    """ Test measure of cell features, in particular intensity measurement """
+
+    test_img = os.path.join(".", "test_data", "area3_Composite.tif")
+    test_seg = os.path.join(".", "test_data", "area3_Composite_epyseg.tif")
+    viewer = napari.Viewer(show=False)
+    epic = epi.EpiCure(viewer)
+    resaxis, resval = epic.load_movie(test_img)
+    epic.set_chanel(1, 1)
+    # test when there are two channels to measure
+    epic.add_other_chanels(0, 1)  ## keep also the first channel to measure intensity in it
+    assert epic.viewer is not None
+    epic.go_epicure("test_epics", test_seg)
+
+    output = epic.outputing
+    assert output is not None
+    output.output_mode.setCurrentText("All cells")
+
+    ## Make sure that intensity_junction_cytoplasm measure is selected
+    output.cell_features.select_all("intensity")
+
+    ## select the two channels to measure
+    output.cell_features.chan_list.item(0).setSelected(True)
+    output.cell_features.chan_list.item(1).setSelected(True)
+
+    ## go measure the cell features
+    output.measure_features()
+
+    ## check that the intensity measurements were done in both channels
+    assert "intensity_mean_MovieChannel_1" in output.table.keys()
+    assert "intensity_mean" in output.table.keys()
+    assert "intensity_junction_MovieChannel_1" in output.table.keys()
+
+    ## now remove the other channels to check it runs on only one channel
+    epic.others = None
+    output.cell_features.chan_list = None
+    ## go measure the cell features
+    output.measure_features()
+    ## check that it measured only the movie channel
+    assert "intensity_mean" in output.table.keys()
+    assert "intensity_mean_MovieChannel_1" not in output.table.keys()
+
 def test_measure_events():
     """ Measure/export of events """
     test_img = os.path.join(".", "test_data", "013_crop.tif")

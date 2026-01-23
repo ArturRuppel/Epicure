@@ -568,9 +568,9 @@ class Outputing(QWidget):
                 frame_table["Border"] = frame_table["label"].isin(bds).astype(int)
             
             # Intensity features in other channels
-            for chan, intimg_chan in chan_dict:
+            for chan, intimg_chan in chan_dict.items():
                 intimg_frame = intimg_chan[frame]
-                frame_tab = ut.labels_table(img, intensity_image=intimg_frame, properties=int_feat, extra_properties=int_extrafeat)
+                frame_tab = ut.labels_table(img, intensity_image=intimg_frame, properties=int_feat, extra_properties=extra_prop)
                 for add_prop in int_feat:
                     frame_table[add_prop+"_"+str(chan)] = frame_tab[add_prop]
                 if "intensity_junction_cytoplasm-0" in frame_tab.keys():
