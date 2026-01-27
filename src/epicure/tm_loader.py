@@ -11,11 +11,16 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 {label_of_daughter_cell: [label_of_mother_cell]}
 """
 
+from cProfile import label
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
+
+from skimage.draw import polygon2mask
+
 import numpy as np
 
+# TODO: re-enable warnings when working EpiCure environment
 # import epicure.Utils as ut
 
 
@@ -120,6 +125,51 @@ def _get_units(
     return units
 
 
+def _parse_all_spots(
+    it: ET.iterparse,
+    positions: np.ndarray,
+    segmentation: np.ndarray,
+) -> None:
+    """
+    Parse the 'AllSpots' XML element to extract spot positions and segmentation data.
+
+    This function iterates through the XML elements under 'AllSpots' to extract
+    spot positions and update the segmentation array.
+
+    Args:
+        it (ET.iterparse): An iterator for parsing XML elements.
+        positions (np.ndarray): A NumPy array to store the extracted positions.
+        segmentation (np.ndarray): A NumPy array to store segmentation data.
+    """
+    spot_index = 0
+    for event, element in it:
+        if element.tag == "Spot" and event == "start":
+            t = int(float(element.attrib["POSITION_T"]))  # or should I take FRAME?
+            x = float(element.attrib["POSITION_X"])
+            y = float(element.attrib["POSITION_Y"])
+            label = int(element.attrib["ID"])
+            positions[spot_index] = [label, t, x, y]
+
+            contour = element.text
+            npoints = int(element.attrib["ROI_N_POINTS"])
+            # FIX: coordinates are in real space, need to convert to pixel space.
+            # FIX: in EC, t is in real time units or frame units?
+            # TODO: wrap this section into a dedicated function.
+            if contour is not None:
+                coords = np.array([float(x) for x in contour.split()])
+                dimension = len(coords) // npoints
+                coords = coords.reshape(-1, dimension)
+                # TODO: check that the axes are not inverted.
+                contour_rc = np.flip(coords, axis=1)  # x, y to row, col
+            mask = polygon2mask(segmentation[t].shape, contour_rc)
+            segmentation[t][mask] = label
+
+            spot_index += 1
+            element.clear()
+        elif element.tag == "AllSpots" and event == "end":
+            break
+
+
 def _parse_Model_tag(
     xml_path: Path, metadata: dict[str, int | float], segmentation: np.ndarray
 ) -> None:
@@ -153,13 +203,15 @@ def _parse_Model_tag(
             # From AllSpots we extract the positions and segmentation.
             if element.tag == "AllSpots" and event == "start":
                 positions = np.zeros((int(element.attrib["nspots"]), 4), dtype=np.float32)
-                # _add_all_nodes(it, element, props_md, graph)
+                _parse_all_spots(it, positions, segmentation)
                 root.clear()
 
             # From AllTracks we extract the dict of tracks.
             if element.tag == "AllTracks" and event == "start":
                 tracks = {}
-                # tracks_attributes = _build_tracks(it, element, props_md, graph)
+                # for event, element in it:
+                #     print(event, element.tag)
+                # tracks_attributes = _build_tracks(it, element)
                 root.clear()
 
                 # Removal of filtered spots / nodes.
@@ -196,6 +248,7 @@ def _parse_Model_tag(
 
 if __name__ == "__main__":
     tm_file = "test_data/FakeTracks.xml"
+    np.set_printoptions(suppress=True, floatmode="maxprec_equal")
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
     metadata = _get_metadata(img_data_tag)
@@ -206,4 +259,6 @@ if __name__ == "__main__":
     # positions, tracks, segmentation = _remap_labels(positions, tracks, segmentation)
     print(metadata)
     print(positions.shape)
+    print(positions)
+
     print(tracks)
