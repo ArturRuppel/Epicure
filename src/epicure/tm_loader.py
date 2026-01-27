@@ -14,11 +14,9 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
+import numpy as np
 
 # import epicure.Utils as ut
-
-
-# TODO: For metadata, I still need to grab space and time units from the Model tag.
 
 
 def _get_ImageData_tag(xml_path: Path) -> ET.Element:
@@ -26,13 +24,13 @@ def _get_ImageData_tag(xml_path: Path) -> ET.Element:
     Extract the 'ImageData' tag from an XML file.
 
     This function parses an XML file to find and extract the 'ImageData' tag.
-    Once found, the tag is deep copied and returned.
+    Once found, a new element with only the attributes is created and returned.
 
     Args:
         xml_path (Path): The file path of the XML file to be parsed.
 
     Returns:
-        ET.Element: A deep copied `ET.Element` object representing the 'ImageData' tag.
+        ET.Element: An `ET.Element` object with the 'ImageData' attributes.
 
     Raises:
         LookupError: If the 'ImageData' tag is not found in the XML file.
@@ -40,10 +38,14 @@ def _get_ImageData_tag(xml_path: Path) -> ET.Element:
     img_data_tag = None
     with open(xml_path, "rb") as f:
         it = ET.iterparse(f, events=["start", "end"])
+        _, root = next(it)  # Saving the root of the tree for later cleaning.
+
         for event, element in it:
             if event == "end" and element.tag == "ImageData":
-                img_data_tag = deepcopy(element)
-                element.clear()
+                # Create a new element with only the attributes (no children subtree).
+                img_data_tag = ET.Element(element.tag, element.attrib)
+                root.clear()  # Cleaning the tree to free up memory.
+                break  # We found what we need, exit early.
             elif event == "end":
                 element.clear()
 
@@ -84,6 +86,103 @@ def _get_metadata(img_data: ET.Element) -> dict[str, int | float]:
     return metadata
 
 
+def _get_units(
+    element: ET.Element,
+) -> dict[str, str]:
+    """Extract units information from an XML element and return it as a dictionary.
+
+    This function deep copies the attributes of the XML element into a dictionary,
+    then clears the element to free up memory.
+
+    Args:
+        element (ET._Element): The XML element holding the units information.
+
+    Returns:
+        dict[str, str]: A dictionary containing the units information.
+        Keys are 'spatialunits' and 'timeunits'.
+
+    Warns:
+        If the 'spatialunits' or 'timeunits' attributes are not found,
+        defaulting them to 'pixel' and 'frame', respectively.
+    """
+    units = {}  # type: dict[str, str]
+    if element.attrib:
+        units = deepcopy(element.attrib)
+    if "spatialunits" not in units:
+        # ut.show_warning("No space unit found in the XML file. Setting to 'pixel'.")
+        units["spatialunits"] = "pixel"  # TrackMate default value.
+    if "timeunits" not in units:
+        # ut.show_warning("No time unit found in the XML file. Setting to 'frame'.")
+        units["timeunits"] = "frame"  # TrackMate default value.
+    element.clear()  # We won't need it anymore so we free up some memory.
+    # .clear() does not delete the element: it only removes all subelements
+    # and clears or sets to `None` all attributes.
+    return units
+
+
+def _parse_Model_tag(
+    xml_path: Path, metadata: dict[str, int | float], segmentation: np.ndarray
+) -> None:
+    """
+    Extract the 'Model' tag from an XML file.
+
+    This function parses an XML file to find and extract the 'Model' tag.
+    Once found, the tag is deep copied and returned.
+
+    Args:
+        xml_path (Path): The file path of the XML file to be parsed.
+        metadata (dict[str, int | float]): A dictionary to update with extracted units information.
+        segmentation (np.ndarray): A NumPy array to store segmentation data.
+
+    Returns:
+        np.ndarray: A NumPy array containing the positions data.
+    """
+    with open(xml_path, "rb") as f:
+        it = ET.iterparse(f, events=["start", "end"])
+        _, root = next(it)  # Saving the root of the tree for later cleaning.
+
+        units: dict[str, str] = {}
+        for event, element in it:
+            # Check for the 'Model' tag
+            if element.tag == "Model" and event == "start":
+                units = _get_units(element)
+                metadata.update(units)
+                root.clear()  # Cleaning the tree to free up some memory.
+                # All the browsed subelements of `root` are deleted.
+
+            # From AllSpots we extract the positions and segmentation.
+            if element.tag == "AllSpots" and event == "start":
+                positions = np.zeros((int(element.attrib["nspots"]), 4), dtype=np.float32)
+                # _add_all_nodes(it, element, props_md, graph)
+                root.clear()
+
+            # From AllTracks we extract the dict of tracks.
+            if element.tag == "AllTracks" and event == "start":
+                tracks = {}
+                # tracks_attributes = _build_tracks(it, element, props_md, graph)
+                root.clear()
+
+                # Removal of filtered spots / nodes.
+                # if not keep_all_spots:
+                #     # Those nodes belong to no tracks: they have a degree of 0.
+                #     lone_nodes = [n for n, d in graph.degree if d == 0]
+                #     graph.remove_nodes_from(lone_nodes)
+
+            # Filtering out tracks and adding tracks attribute.
+            # if element.tag == "FilteredTracks" and event == "start":
+            #     # Removal of filtered tracks.
+            #     id_to_keep = _get_filtered_tracks_ID(it, element)
+            #     if not keep_all_tracks:
+            #         to_remove = [n for n, t in graph.nodes(data="TRACK_ID") if t not in id_to_keep]
+            #         graph.remove_nodes_from(to_remove)
+
+            if element.tag == "Model" and event == "end":
+                root.clear()
+                break  # We are not interested in the following data.
+
+    return positions, tracks
+
+
 # Load positions
 # numpy array of label, pos t, pos x, pos y
 # Size of the array is (num_spots, 4) and num_spots is stored in tag AllSpots, attribute nspots
@@ -100,4 +199,11 @@ if __name__ == "__main__":
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
     metadata = _get_metadata(img_data_tag)
+    segmentation = np.zeros(
+        (metadata["nframes"], metadata["height"], metadata["width"]), dtype=np.uint16
+    )
+    positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
+    # positions, tracks, segmentation = _remap_labels(positions, tracks, segmentation)
     print(metadata)
+    print(positions.shape)
+    print(tracks)
