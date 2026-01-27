@@ -170,9 +170,35 @@ def _parse_all_spots(
             break
 
 
+def _parse_all_tracks(it: ET.iterparse, tracks: dict[int, list[int]]) -> None:
+    """
+    Parse the 'AllTracks' XML element to extract track information.
+
+    This function iterates through the XML elements under 'AllTracks' to extract
+    track information and populate the tracks dictionary. This dictionary maps
+    daughter cell labels to their mother cell labels.
+
+    Args:
+        it (ET.iterparse): An iterator for parsing XML elements.
+        tracks (dict[int, list[int]]): A dictionary to store the extracted tracks.
+    """
+    for event, element in it:
+        if element.tag == "Edge" and event == "start":
+            mother_id = int(element.attrib["SPOT_SOURCE_ID"])
+            daughter_id = int(element.attrib["SPOT_TARGET_ID"])
+            if daughter_id not in tracks:
+                tracks[daughter_id] = [mother_id]
+            else:
+                tracks[daughter_id].append(mother_id)
+            element.clear()
+
+        elif element.tag == "AllTracks" and event == "end":
+            break
+
+
 def _parse_Model_tag(
     xml_path: Path, metadata: dict[str, int | float], segmentation: np.ndarray
-) -> None:
+) -> tuple[np.ndarray, dict[int, list[int]]]:
     """
     Extract the 'Model' tag from an XML file.
 
@@ -186,6 +212,7 @@ def _parse_Model_tag(
 
     Returns:
         np.ndarray: A NumPy array containing the positions data.
+        dict[int, list[int]]: A dictionary containing the tracks data.
     """
     with open(xml_path, "rb") as f:
         it = ET.iterparse(f, events=["start", "end"])
@@ -209,24 +236,8 @@ def _parse_Model_tag(
             # From AllTracks we extract the dict of tracks.
             if element.tag == "AllTracks" and event == "start":
                 tracks = {}
-                # for event, element in it:
-                #     print(event, element.tag)
-                # tracks_attributes = _build_tracks(it, element)
+                _parse_all_tracks(it, tracks)
                 root.clear()
-
-                # Removal of filtered spots / nodes.
-                # if not keep_all_spots:
-                #     # Those nodes belong to no tracks: they have a degree of 0.
-                #     lone_nodes = [n for n, d in graph.degree if d == 0]
-                #     graph.remove_nodes_from(lone_nodes)
-
-            # Filtering out tracks and adding tracks attribute.
-            # if element.tag == "FilteredTracks" and event == "start":
-            #     # Removal of filtered tracks.
-            #     id_to_keep = _get_filtered_tracks_ID(it, element)
-            #     if not keep_all_tracks:
-            #         to_remove = [n for n, t in graph.nodes(data="TRACK_ID") if t not in id_to_keep]
-            #         graph.remove_nodes_from(to_remove)
 
             if element.tag == "Model" and event == "end":
                 root.clear()
@@ -256,7 +267,7 @@ if __name__ == "__main__":
         (metadata["nframes"], metadata["height"], metadata["width"]), dtype=np.uint16
     )
     positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
-    # positions, tracks, segmentation = _remap_labels(positions, tracks, segmentation)
+    # positions, tracks, segmentation = _relabel(positions, tracks, segmentation)
     print(metadata)
     print(positions.shape)
     print(positions)
