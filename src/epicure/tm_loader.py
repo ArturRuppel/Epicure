@@ -11,14 +11,12 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 {label_of_daughter_cell: [label_of_mother_cell]}
 """
 
-from cProfile import label
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
 
-from skimage.draw import polygon2mask
-
 import numpy as np
+from skimage.draw import polygon2mask
 
 # TODO: re-enable warnings when working EpiCure environment
 # import epicure.Utils as ut
@@ -246,20 +244,9 @@ def _parse_Model_tag(
     return positions, tracks
 
 
-# Load positions
-# numpy array of label, pos t, pos x, pos y
-# Size of the array is (num_spots, 4) and num_spots is stored in tag AllSpots, attribute nspots
-
-# Load segmentation
-# numpy array with the same dims as the image (t, y, x)
-
-# Load tracks
-# a unique dict of {label_of_daughter_cell: [label_of_mother_cell]}
-
-
 if __name__ == "__main__":
     tm_file = "test_data/FakeTracks.xml"
-    np.set_printoptions(suppress=True, floatmode="maxprec_equal")
+    # np.set_printoptions(suppress=True, floatmode="maxprec_equal")
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
     metadata = _get_metadata(img_data_tag)
@@ -267,6 +254,8 @@ if __name__ == "__main__":
         (metadata["nframes"], metadata["height"], metadata["width"]), dtype=np.uint16
     )
     positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
+    # TODO: TrackMate has one label per detected spot, but EpiCure assumes
+    # that labels are constant per tracklet.
     # positions, tracks, segmentation = _relabel(positions, tracks, segmentation)
     print(metadata)
     print(positions.shape)
