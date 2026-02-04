@@ -11,6 +11,7 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 {label_of_daughter_cell: [label_of_mother_cell]}
 """
 
+from typing import Union, Iterator
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
@@ -18,8 +19,7 @@ from pathlib import Path
 import numpy as np
 from skimage.draw import polygon2mask
 
-# TODO: re-enable warnings when working EpiCure environment
-# import epicure.Utils as ut
+import epicure.Utils as ut
 
 
 def _get_ImageData_tag(xml_path: Path) -> ET.Element:
@@ -58,7 +58,7 @@ def _get_ImageData_tag(xml_path: Path) -> ET.Element:
     return img_data_tag
 
 
-def _get_metadata(img_data: ET.Element) -> dict[str, int | float]:
+def _get_metadata(img_data: ET.Element) -> dict[str, Union[int, float, str]]:
     """
     Extract metadata from the 'ImageData' XML element.
 
@@ -112,10 +112,10 @@ def _get_units(
     if element.attrib:
         units = deepcopy(element.attrib)
     if "spatialunits" not in units:
-        # ut.show_warning("No space unit found in the XML file. Setting to 'pixel'.")
+        ut.show_warning("No space unit found in the XML file. Setting to 'pixel'.")
         units["spatialunits"] = "pixel"  # TrackMate default value.
     if "timeunits" not in units:
-        # ut.show_warning("No time unit found in the XML file. Setting to 'frame'.")
+        ut.show_warning("No time unit found in the XML file. Setting to 'frame'.")
         units["timeunits"] = "frame"  # TrackMate default value.
     element.clear()  # We won't need it anymore so we free up some memory.
     # .clear() does not delete the element: it only removes all subelements
@@ -124,7 +124,7 @@ def _get_units(
 
 
 def _parse_all_spots(
-    it: ET.iterparse,
+    it: Iterator[tuple[str, ET.Element]],
     positions: np.ndarray,
     segmentation: np.ndarray,
 ) -> None:
@@ -159,8 +159,8 @@ def _parse_all_spots(
                 coords = coords.reshape(-1, dimension)
                 # TODO: check that the axes are not inverted.
                 contour_rc = np.flip(coords, axis=1)  # x, y to row, col
-            mask = polygon2mask(segmentation[t].shape, contour_rc)
-            segmentation[t][mask] = label
+                mask = polygon2mask(segmentation[t].shape, contour_rc)
+                segmentation[t][mask] = label
 
             spot_index += 1
             element.clear()
@@ -168,7 +168,7 @@ def _parse_all_spots(
             break
 
 
-def _parse_all_tracks(it: ET.iterparse, tracks: dict[int, list[int]]) -> None:
+def _parse_all_tracks(it: Iterator[tuple[str, ET.Element]], tracks: dict[int, list[int]]) -> None:
     """
     Parse the 'AllTracks' XML element to extract track information.
 
@@ -195,7 +195,9 @@ def _parse_all_tracks(it: ET.iterparse, tracks: dict[int, list[int]]) -> None:
 
 
 def _parse_Model_tag(
-    xml_path: Path, metadata: dict[str, int | float], segmentation: np.ndarray
+    xml_path: Path,
+    metadata: dict[str, Union[int, float, str]],
+    segmentation: np.ndarray,
 ) -> tuple[np.ndarray, dict[int, list[int]]]:
     """
     Extract the 'Model' tag from an XML file.
@@ -217,6 +219,8 @@ def _parse_Model_tag(
         _, root = next(it)  # Saving the root of the tree for later cleaning.
 
         units: dict[str, str] = {}
+        positions: np.ndarray = np.empty((0, 4), dtype=np.float32)
+        tracks: dict[int, list[int]] = {}
         for event, element in it:
             # Check for the 'Model' tag
             if element.tag == "Model" and event == "start":
@@ -233,7 +237,6 @@ def _parse_Model_tag(
 
             # From AllTracks we extract the dict of tracks.
             if element.tag == "AllTracks" and event == "start":
-                tracks = {}
                 _parse_all_tracks(it, tracks)
                 root.clear()
 
@@ -250,9 +253,9 @@ if __name__ == "__main__":
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
     metadata = _get_metadata(img_data_tag)
-    segmentation = np.zeros(
-        (metadata["nframes"], metadata["height"], metadata["width"]), dtype=np.uint16
-    )
+    seg_shape = (int(metadata["nframes"]), int(metadata["height"]), int(metadata["width"]))
+    segmentation = np.zeros(seg_shape, dtype=np.uint16)
+    print(segmentation.shape)
     positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
     # TODO: TrackMate has one label per detected spot, but EpiCure assumes
     # that labels are constant per tracklet.
