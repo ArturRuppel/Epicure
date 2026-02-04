@@ -11,10 +11,10 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 {label_of_daughter_cell: [label_of_mother_cell]}
 """
 
-from typing import Union, Iterator
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
+from typing import Iterator, Union
 
 import numpy as np
 from skimage.draw import polygon2mask
@@ -194,6 +194,149 @@ def _parse_all_tracks(it: Iterator[tuple[str, ET.Element]], tracks: dict[int, li
             break
 
 
+def _build_label_mapping(positions: np.ndarray, tracks: dict[int, list[int]]) -> dict[int, int]:
+    """
+    Build a mapping from TrackMate labels to EpiCure labels.
+
+    In TrackMate, each detected spot has a unique label, while in EpiCure,
+    labels are constant per tracklet, hence the need for mapping.
+
+    Args:
+        positions (np.ndarray): The array of positions.
+        tracks (dict[int, list[int]]): The dictionary of tracks.
+
+    Returns:
+        dict[int, int]: A dictionary mapping TrackMate labels to EpiCure labels.
+    """
+    # Reverse mapping from daughter to mother to get simple edges and division edges.
+    mother_to_daughters = {}
+    for daughter, mothers in tracks.items():
+        for mother in mothers:
+            if mother not in mother_to_daughters:
+                mother_to_daughters[mother] = [daughter]
+            else:
+                mother_to_daughters[mother].append(daughter)
+
+    edges = {m: d[0] for m, d in mother_to_daughters.items() if len(d) == 1}
+    divisions = {m: d for m, d in mother_to_daughters.items() if len(d) > 1}
+    fusions = {d: m for d, m in tracks.items() if len(m) > 1}
+    fusion_mothers = set()  # a set of mothers that participate in fusions
+    for mothers in fusions.values():
+        fusion_mothers.update(mothers)
+
+    label_mapping = {}
+    new_label = 1
+    frames = np.unique(positions[:, 1])
+
+    for frame in frames:
+        frame_positions = positions[positions[:, 1] == frame]
+        for old_label in frame_positions[:, 0]:
+            old_label_int = int(old_label)
+
+            # Division edge => mother keeps its label, each daughter gets a new label.
+            if old_label_int in divisions:
+                # Assign new label to the mother when not already assigned (tracklet start).
+                if old_label_int not in label_mapping:
+                    label_mapping[old_label_int] = new_label
+                    new_label += 1
+                # Assign new labels to each daughter.
+                daughters = divisions[old_label_int]
+                for daughter in daughters:
+                    label_mapping[int(daughter)] = new_label
+                    new_label += 1
+
+            # Mother in a fusion => gets its own label, tracklet ends here.
+            elif old_label_int in fusion_mothers:
+                if old_label_int not in label_mapping:
+                    label_mapping[old_label_int] = new_label
+                    new_label += 1
+
+            # Daughter in a fusion => gets a new label (multiple mothers merge into this).
+            elif old_label_int in fusions:
+                if old_label_int not in label_mapping:
+                    label_mapping[old_label_int] = new_label
+                    new_label += 1
+                # If this fusion daughter is also a mother in a simple edge, propagate the label.
+                if old_label_int in edges:
+                    label_mapping[int(edges[old_label_int])] = label_mapping[old_label_int]
+
+            # Simple edge => mother and daughter share the same label (same tracklet).
+            elif old_label_int in edges:
+                if old_label_int not in label_mapping:
+                    label_mapping[old_label_int] = new_label
+                # Propagate the same label to the daughter (continue tracklet).
+                label_mapping[int(edges[old_label_int])] = label_mapping[old_label_int]
+
+            # Lone detection or start of new track.
+            elif old_label_int not in label_mapping:
+                label_mapping[old_label_int] = new_label
+                new_label += 1
+
+    # Do we have everyone mapped?
+    assert len(label_mapping) == positions.shape[0], "Some labels were not mapped!"
+    assert sorted(label_mapping.keys()) == sorted(set(positions[:, 0].astype(int))), "Some labels were not mapped!"
+
+    return label_mapping
+
+
+def relabel_positions(label_mapping: dict[int, int], positions: np.ndarray) -> np.ndarray:
+    """
+    Relabel positions to match EpiCure requirements.
+
+    Args:
+        label_mapping (dict[int, int]): A dictionary mapping TrackMate labels to EpiCure labels.
+        positions (np.ndarray): The array of positions to be relabeled.
+
+    Returns:
+        np.ndarray: The relabeled positions.
+    """
+    new_positions = np.zeros_like(positions)
+    for i in range(positions.shape[0]):
+        old_label = int(positions[i, 0])
+        new_label = label_mapping[old_label]
+        new_positions[i] = positions[i]
+        new_positions[i, 0] = new_label
+    return new_positions
+
+
+def relabel_tracks(label_mapping: dict[int, int], tracks: dict[int, list[int]]) -> dict[int, list[int]]:
+    """
+    Relabel tracks to match EpiCure requirements.
+
+    Args:
+        label_mapping (dict[int, int]): A dictionary mapping TrackMate labels to EpiCure labels.
+        tracks (dict[int, list[int]]): The dictionary of tracks to be relabeled.
+
+    Returns:
+        dict[int, list[int]]: The relabeled tracks.
+    """
+    new_tracks = {}
+    for daughter_old, mothers_old in tracks.items():
+        daughter_new = label_mapping[daughter_old]
+        mothers_new = [label_mapping[mother_old] for mother_old in mothers_old]
+        # Ignore entries for which the daughter label is identical to the mother(s) label.
+        if daughter_new not in mothers_new:
+            new_tracks[daughter_new] = mothers_new
+    return new_tracks
+
+
+def relabel_segmentation(label_mapping: dict[int, int], segmentation: np.ndarray) -> np.ndarray:
+    """
+    Relabel segmentation to match EpiCure requirements.
+
+    Args:
+        label_mapping (dict[int, int]): A dictionary mapping TrackMate labels to EpiCure labels.
+        segmentation (np.ndarray): The segmentation array to be relabeled.
+
+    Returns:
+        np.ndarray: The relabeled segmentation.
+    """
+    new_seg = np.zeros_like(segmentation)
+    for old_label, new_label in label_mapping.items():
+        new_seg[segmentation == old_label] = new_label
+    return new_seg
+
+
 def _parse_Model_tag(
     xml_path: Path,
     metadata: dict[str, Union[int, float, str]],
@@ -248,20 +391,22 @@ def _parse_Model_tag(
 
 
 if __name__ == "__main__":
-    tm_file = "test_data/FakeTracks.xml"
-    # np.set_printoptions(suppress=True, floatmode="maxprec_equal")
+    tm_file = "test_data/FakeTracks_with_fusions.xml"
+    np.set_printoptions(suppress=True, floatmode="maxprec_equal")
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
     metadata = _get_metadata(img_data_tag)
     seg_shape = (int(metadata["nframes"]), int(metadata["height"]), int(metadata["width"]))
     segmentation = np.zeros(seg_shape, dtype=np.uint16)
-    print(segmentation.shape)
     positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
-    # TODO: TrackMate has one label per detected spot, but EpiCure assumes
-    # that labels are constant per tracklet.
-    # positions, tracks, segmentation = _relabel(positions, tracks, segmentation)
-    print(metadata)
-    print(positions.shape)
-    print(positions)
+    # print(positions)
+    label_mapping = _build_label_mapping(positions, tracks)
+    positions = relabel_positions(label_mapping, positions)
+    tracks = relabel_tracks(label_mapping, tracks)
+    segmentation = relabel_segmentation(label_mapping, segmentation)
+    print(label_mapping)
+    # print(metadata)
+    # print(positions.shape)
+    # print(positions[0:10])
 
     print(tracks)
