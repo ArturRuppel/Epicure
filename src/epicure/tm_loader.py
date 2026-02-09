@@ -11,6 +11,7 @@ Tracks are stored as a dictionary mapping daughter cell labels to their mother c
 {label_of_daughter_cell: [label_of_mother_cell]}
 """
 
+from calendar import c
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
@@ -86,6 +87,10 @@ def _get_metadata(img_data: ET.Element) -> dict[str, Union[int, float, str]]:
         if metadata[key] is None:
             raise KeyError(f"No '{key}' attribute in the 'ImageData' XML element.")
         metadata[key] = float(metadata[key])
+
+    # TODO: check if non-square pixels ok.
+    assert metadata["pixelwidth"] == metadata["pixelheight"], "Non-square pixels. Unsure if supported?"
+
     return metadata
 
 
@@ -127,6 +132,7 @@ def _parse_all_spots(
     it: Iterator[tuple[str, ET.Element]],
     positions: np.ndarray,
     segmentation: np.ndarray,
+    metadata: dict[str, Union[int, float, str]],
 ) -> None:
     """
     Parse the 'AllSpots' XML element to extract spot positions and segmentation data.
@@ -138,25 +144,30 @@ def _parse_all_spots(
         it (ET.iterparse): An iterator for parsing XML elements.
         positions (np.ndarray): A NumPy array to store the extracted positions.
         segmentation (np.ndarray): A NumPy array to store segmentation data.
+        metadata (dict[str, Union[int, float, str]]): A dictionary containing units information.
     """
+    px_width = float(metadata.get("pixelwidth", 1.0))
+    px_height = float(metadata.get("pixelheight", 1.0))
     spot_index = 0
     for event, element in it:
         if element.tag == "Spot" and event == "start":
+            # TODO: in EC, t is in real time units or frame units?
             t = int(float(element.attrib["POSITION_T"]))  # or should I take FRAME?
-            x = float(element.attrib["POSITION_X"])
-            y = float(element.attrib["POSITION_Y"])
+            x = float(element.attrib["POSITION_X"]) / px_width
+            y = float(element.attrib["POSITION_Y"]) / px_height
             label = int(element.attrib["ID"])
             positions[spot_index] = [label, t, x, y]
 
             contour = element.text
             npoints = int(element.attrib["ROI_N_POINTS"])
-            # FIX: coordinates are in real space, need to convert to pixel space.
-            # FIX: in EC, t is in real time units or frame units?
-            # TODO: wrap this section into a dedicated function.
+
             if contour is not None:
+                # TODO: wrap this section into a dedicated function.
                 coords = np.array([float(x) for x in contour.split()])
                 dimension = len(coords) // npoints
                 coords = coords.reshape(-1, dimension)
+                coords[:, 0] = x - (coords[:, 0] / px_width)
+                coords[:, 1] = y - (coords[:, 1] / px_height)
                 # TODO: check that the axes are not inverted.
                 contour_rc = np.flip(coords, axis=1)  # x, y to row, col
                 mask = polygon2mask(segmentation[t].shape, contour_rc)
@@ -375,7 +386,7 @@ def _parse_Model_tag(
             # From AllSpots we extract the positions and segmentation.
             if element.tag == "AllSpots" and event == "start":
                 positions = np.zeros((int(element.attrib["nspots"]), 4), dtype=np.float32)
-                _parse_all_spots(it, positions, segmentation)
+                _parse_all_spots(it, positions, segmentation, metadata)
                 root.clear()
 
             # From AllTracks we extract the dict of tracks.
@@ -392,6 +403,8 @@ def _parse_Model_tag(
 
 if __name__ == "__main__":
     tm_file = "test_data/FakeTracks_with_fusions.xml"
+    # tm_file = "/media/lxenard/data/Code/pycellin/pycellin/sample_data/Ecoli_growth_on_agar_pad.xml"
+    tm_file = "/home/lxenard/snap/trackMateMoiCa/epics/013_crop.xml"
     np.set_printoptions(suppress=True, floatmode="maxprec_equal")
 
     img_data_tag = _get_ImageData_tag(Path(tm_file))
@@ -408,5 +421,18 @@ if __name__ == "__main__":
     # print(metadata)
     # print(positions.shape)
     # print(positions[0:10])
-
     print(tracks)
+
+    import matplotlib.pyplot as plt
+
+    n_frames = segmentation.shape[0]
+    n_cols = 10
+    n_rows = (n_frames + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(40, 2 * n_rows))
+    for i in range(n_frames):
+        ax = axes[i // n_cols, i % n_cols]
+        ax.imshow(segmentation[i], cmap="gray")
+        ax.set_title(f"Frame {i}")
+        ax.axis("off")
+    plt.tight_layout()
+    plt.show()
