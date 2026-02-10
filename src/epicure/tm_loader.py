@@ -117,10 +117,10 @@ def _get_units(
         units = deepcopy(element.attrib)
     if "spatialunits" not in units:
         ut.show_warning("No space unit found in the XML file. Setting to 'pixel'.")
-        units["spatialunits"] = "pixel"  # TrackMate default value.
+        units["spatialunits"] = "pixel"  # TrackMate default value
     if "timeunits" not in units:
         ut.show_warning("No time unit found in the XML file. Setting to 'frame'.")
-        units["timeunits"] = "frame"  # TrackMate default value.
+        units["timeunits"] = "frame"  # TrackMate default value
     element.clear()  # We won't need it anymore so we free up some memory.
     # .clear() does not delete the element: it only removes all subelements
     # and clears or sets to `None` all attributes.
@@ -169,7 +169,6 @@ def _parse_all_spots(
             npoints = int(element.attrib["ROI_N_POINTS"])
 
             if contour is not None:
-                # TODO: wrap this section into a dedicated function.
                 coords = np.array([float(x) for x in contour.split()])
                 dimension = len(coords) // npoints
                 coords = coords.reshape(-1, dimension)
@@ -384,7 +383,7 @@ def _parse_Model_tag(
     ignored_spots = None
     with open(xml_path, "rb") as f:
         it = ET.iterparse(f, events=["start", "end"])
-        _, root = next(it)  # Saving the root of the tree for later cleaning.
+        _, root = next(it)  # saving the root of the tree for later cleaning
 
         units: dict[str, str] = {}
         positions: np.ndarray = np.empty((0, 4), dtype=np.float32)
@@ -394,7 +393,7 @@ def _parse_Model_tag(
             if element.tag == "Model" and event == "start":
                 units = _get_units(element)
                 metadata.update(units)
-                root.clear()  # Cleaning the tree to free up some memory.
+                root.clear()  # cleaning the tree to free up some memory
                 # All the browsed subelements of `root` are deleted.
 
             # From AllSpots we extract the positions and segmentation.
@@ -410,7 +409,7 @@ def _parse_Model_tag(
 
             if element.tag == "Model" and event == "end":
                 root.clear()
-                break  # We are not interested in the following data.
+                break  # not interested in the following data
 
     if ignored_spots is not None:
         ut.show_warning(f"{len(ignored_spots)} spots were filtered out in TrackMate and will not be loaded into EpiCure. IDs: {ignored_spots}.")
@@ -432,17 +431,10 @@ if __name__ == "__main__":
     seg_shape = (int(metadata["nframes"]), int(metadata["height"]), int(metadata["width"]))
     segmentation = np.zeros(seg_shape, dtype=np.uint16)
     positions, tracks = _parse_Model_tag(Path(tm_file), metadata, segmentation)
-    print(positions[-1, :])
     label_mapping = _build_label_mapping(positions, tracks)
     positions = relabel_positions(label_mapping, positions)
     tracks = relabel_tracks(label_mapping, tracks)
     segmentation = relabel_segmentation(label_mapping, segmentation)
-    print(label_mapping)
-    # print(metadata)
-    # print(positions.shape)
-    # print(positions[0:10])
-    # print(tracks)
-    print(label_mapping[2012])
 
     # import matplotlib.pyplot as plt
 
