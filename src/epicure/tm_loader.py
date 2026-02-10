@@ -157,10 +157,9 @@ def _parse_all_spots(
             if not int(element.attrib["VISIBILITY"]):
                 invisible_spots_ids.append(int(element.attrib["ID"]))
                 element.clear()
-                continue  # Skip invisible spots.
+                continue  # skip invisible spots
 
-            # TODO: in EC, t is in real time units or frame units?
-            t = int(float(element.attrib["POSITION_T"]))  # or should I take FRAME?
+            t = int(float(element.attrib["FRAME"]))
             x = float(element.attrib["POSITION_X"]) / px_width
             y = float(element.attrib["POSITION_Y"]) / px_height
             label = int(element.attrib["ID"])
@@ -176,7 +175,6 @@ def _parse_all_spots(
                 coords = coords.reshape(-1, dimension)
                 coords[:, 0] = x - (coords[:, 0] / px_width)
                 coords[:, 1] = y - (coords[:, 1] / px_height)
-                # TODO: check that the axes are not inverted.
                 contour_rc = np.flip(coords, axis=1)  # x, y to row, col
                 mask = polygon2mask(segmentation[t].shape, contour_rc)
                 segmentation[t][mask] = label
