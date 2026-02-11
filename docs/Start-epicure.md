@@ -8,16 +8,20 @@ However, if some format is not correctly recongized/handled by EpiCure, you can 
 
 In the `Start EpiCure` step, you have a dedicated interface in the right part of the main interface.
 
+### Raw movie
 The first file to choose is the movie containing the epithelial staining, with the `image file` parameter. 
 It should be _2D(+time/channels) file_. 3D is not handled. If a file has a Z dimension and no temporal dimension, EpiCure will swap them and use the Z axis as time.  
 
 If the file contains several chanels, the plugin should detect it and show the `junction_chanel` parameter, to choose the chanel that contains the junction staining. The plugin will display only this chanel. If you wish to also see the other chanels, use the option `show other chanels` in the [advanced parameters](#advanced-parameters) panel.
 
-The second file is the segmentation of this movie (it should only contain the segmentation), to select with the `segmentation file` parameter. It can be a binarized file of the junctions (skeletonized) or a labelled file (each cell is filled by a unique number).
+### Segmentation/Tracks
+The second file is the segmentation or tracks of this movie (it should only contain the segmentation), to select with the `segmentation file` parameter. It can be a binarized file of the junctions (skeletonized), a labelled file (each cell is filled by a unique number), or a TrackMate `.xml` file.
+
+If it is a TrackMate file, the tracks and the divisions will be loaded directly from it.
 
 _Note that if you haven't done the segmentation yet, there's an [additional option](./Segment-option.md) in EpiCure to directly run [EpySeg](https://github.com/baigouy/EPySeg) on the loaded movie._ 
 
-If the input movie file had already been processed with EpiCure previously (and saved), EpiCure will automatically propose to load the saved file and reload the previous parameters. You can directly click `START CURE` in this case.
+If the input movie file had already been processed with EpiCure previously (and saved), EpiCure will **automatically propose to load the saved file** and reload the previous parameters. You can directly click `START CURE` in this case.
 
 ![start interface](./imgs/starting.png)
 

@@ -35,7 +35,9 @@ Division events are detected based on the tracking graph. If cells has not been 
 (Un)Select the option `show division` to (un)display division events. You can see the total number of divisions found written in the top of the `Inspect` panel.
 
 You can manually add a division event, or remove one.
+
 * To remove a division, the shortcut is the same as for removing any event: by default, press <kbd>Control+Alt+Right-click</kbd> on the event to remove.
+
 * To add a divison, do <kbd>Control+Shift+Left clikc</kbd> from one daughter cell to the other. EpiCure will detect automatically the most likely mother cell.
 If suspect events had been found on the two daughter cells or on the mother cell, they will be automatically removed when manually adding the division.
 
