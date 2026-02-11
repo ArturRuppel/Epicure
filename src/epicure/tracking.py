@@ -650,6 +650,12 @@ class Tracking(QWidget):
                     if vals not in self.track_data[:,0]:
                         del self.graph[key]
 
+    def set_graph(self, graph):
+        """ Set the current graph (eg imported from TrackMate XML file) """
+        self.graph = graph
+        ## set the divisions from the graph
+        self.epicure.inspecting.get_divisions()
+
     def update_graph_frames( self, track_id, frames ):
         """ Update graph when one label was deleted at given frames """
         fframe = np.min(frames)

@@ -7,6 +7,7 @@ from napari.utils import progress
 from skimage.morphology import skeletonize
 from skimage.measure import regionprops
 from joblib import Parallel, delayed
+from pathlib import Path
 
 import epicure.Utils as ut
 from epicure.editing import Editing
@@ -15,6 +16,7 @@ from epicure.inspecting import Inspecting
 from epicure.outputing import Outputing
 from epicure.displaying import Displaying
 from epicure.preferences import Preferences
+import epicure.tm_loader as tm
 
 """
     EpiCure main
@@ -246,9 +248,28 @@ class EpiCure:
                 mview.gamma=0.95
                 mview.visible = False
 
+    def import_trackmate(self, segpath, verbose=0):
+        """ Load segmentation and tracks from TrackMate XML file """
+        if verbose > 1:
+            print("Importing segmentation and tracks from TrackMate XML file")
+        np.set_printoptions(suppress=True, floatmode="maxprec_equal")
+
+        img_data_tag = tm._get_ImageData_tag(segpath)
+        metadata = tm._get_metadata(img_data_tag)
+        seg_shape = (int(metadata["nframes"]), int(metadata["height"]), int(metadata["width"]))
+        segmentation = np.zeros(seg_shape, dtype=np.uint16)-1
+        positions, tracks = tm._parse_Model_tag(segpath, metadata, segmentation)
+        label_mapping = tm._build_label_mapping(positions, tracks)
+        positions = tm.relabel_positions(label_mapping, positions)
+        tracks = tm.relabel_tracks(label_mapping, tracks)
+        segmentation = tm.relabel_segmentation(label_mapping, segmentation)
+        return segmentation, tracks
+
+
     def load_segmentation(self, seg_input):
         """Load the segmentation file"""
         start_time = ut.start_time()
+        self.graph = None ## no loaded graph
         ## compatibility to string input, the path to the image or a dictionnary
         if isinstance(seg_input, dict):
             segpath = seg_input["File"]
@@ -260,7 +281,11 @@ class EpiCure:
             self.seg = seg_input["Layer"].data
             ut.remove_layer(self.viewer, seg_input["Layer"])
         else:
-            self.seg, _, _, _, _, _ = ut.open_image(segpath, get_metadata=False, verbose=self.verbose > 1)
+            if str(segpath).endswith(".xml"):
+                ## import a TrackMate file
+                self.seg, self.graph = self.import_trackmate(segpath, verbose=self.verbose>1)
+            else:
+                self.seg, _, _, _, _, _ = ut.open_image(segpath, get_metadata=False, verbose=self.verbose > 1)
         self.seg = np.uint32(self.seg)
         ## transform static image to movie (add temporal dimension)
         if len(self.seg.shape) == 2:
@@ -279,12 +304,6 @@ class EpiCure:
 
         ## define a reference size of the movie to scale default parameters
         self.reference_size = np.max(self.imgshape2D)
-        ## define the average cell radius
-        # self.cell_avg_radius = int( math.sqrt( ut.average_area( self.seg[0])/math.pi ) )
-        # on cell area ut.summary_labels( self.seg[0] )
-        # if self.verbose > 1:
-        #    print("Reference size of the movie: "+str(self.reference_size))
-
         self.epi_metadata["Reloading"] = True  ## has been formatted to EpiCure format
 
         # display the segmentation file movie
@@ -299,6 +318,7 @@ class EpiCure:
         if self.verbose > 0:
             ut.show_duration(start_time, header="Segmentation loaded in ")
 
+
     def load_tracks(self, progress_bar):
         """From the segmentation, get all the metadata"""
         tracked = "tracked"
@@ -306,6 +326,8 @@ class EpiCure:
         if self.tracked == 0:
             tracked = "untracked"
         else:
+            if self.graph is not None:
+                self.tracking.set_graph(self.graph)
             if self.forbid_gaps:
                 progress_bar.set_description("check and fix track gaps")
                 self.handle_gaps(track_list=None, verbose=1)
@@ -562,12 +584,16 @@ class EpiCure:
         summ += "Average track lengths: " + str(mean_duration) + " frames\n"
         summ += "Average cell area: " + str(mean_area) + " pixels^2\n"
         summ += "Nb suspect events: " + str(self.inspecting.nb_events(only_suspect=True)) + "\n"
-        summ += "Nb divisions: " + str(self.inspecting.nb_type("division")) + "\n"
+        summ += "Nb divisions: " + str(self.nb_divisions()) + "\n"
         summ += "Nb extrusions: " + str(self.inspecting.nb_type("extrusion")) + "\n"
         summ += "\n"
         summ += "--- Parameter infos \n"
         summ += "Junction thickness: " + str(self.thickness) + "\n"
         return summ
+
+    def nb_divisions(self):
+        """ Return the number of divisions """
+        return self.inspecting.nb_type("division")
 
     def set_contour(self, width):
         self.seglayer.contour = width
