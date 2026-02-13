@@ -21,7 +21,6 @@ from scipy import signal
 from skimage.morphology import medial_axis
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
-from bioio import BioImage
 import tifffile as tif # type: ignore
 import napari
 from napari.utils import progress # type: ignore
@@ -259,6 +258,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
             print("Opening Tif image "+str(imagepath)+" with bioio-tifffile")
         import bioio_tifffile
         if version_python_minor(10):
+            from bioio import BioImage
             img = BioImage(imagepath, reader=bioio_tifffile.Reader)
         else:
             ## python 3.9 or under
@@ -270,6 +270,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
         if verbose:
             print("Opening "+extension+" image "+str(imagepath)+" with bioio-bioformats")
         if version_python_minor(10):
+            from bioio import BioImage
             img = BioImage(imagepath, reader=bioio_bioformats.Reader)
         else:
             ## python 3.9 or under

@@ -40,7 +40,7 @@ dependencies = [
     "imagecodecs",
     "edt",
     "packaging",
-    "laptrack",
+    "laptrack>=0.15.0",
     "joblib",
 ]
 
