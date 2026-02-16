@@ -9,7 +9,7 @@ except ImportError:
     print("Laptrack overlap not available in your laptrack version. Only the centroid option will be proposed. Update laptrack to 0.16 to have it")
     pass
 import laptrack
-if ut.version_above(laptrack, "0.17.0"):
+if ut.version_above(laptrack, "0.16"):
     from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph# type: ignore
 else:
     from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
