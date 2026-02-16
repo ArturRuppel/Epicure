@@ -78,6 +78,10 @@ def close_progress( viewer, progress_bar ):
     progress_bar.close()
     show_progress( viewer, False)
 
+def version_above( module, version ):
+    """ Compare if python module is above a given version """
+    return Version(module.__version__) > Version(version)
+
 #### Handle versions of napari
 def version_napari_above( compare_version ):
     """ Compare if the current version of napari is above given version """
