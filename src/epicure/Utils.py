@@ -4,6 +4,7 @@
 
 import numpy as np
 import os, sys
+from sys import platform
 import time
 import math
 from skimage.measure import label, regionprops, find_contours, regionprops_table
@@ -137,6 +138,7 @@ def create_text_window( name ):
     blabla.name = name 
     blabla.show()
     return blabla
+
 
 def napari_shortcuts():
     """ Write main napari shortcuts list """
@@ -1116,6 +1118,13 @@ def shortcut_click_match( shortcut, event ):
         if len(event.modifiers) > 0:
             return False
         return True
+
+def is_darwin():
+    """ Test if OS is MacOS or not """
+    try:
+        return platform.lower() == "darwin"
+    except:
+        return False
         
 def print_shortcuts( shortcut_group ):
     """ Put to text the subset of shortcuts """
@@ -1128,7 +1137,13 @@ def print_shortcuts( shortcut_group ):
             if "modifiers" in vals.keys():
                 modifiers = vals["modifiers"]
                 for mod in modifiers:
-                    modif += mod+"-"
+                    if mod == "Control":
+                        if is_darwin():
+                            modif += "Command"+"-"
+                        else:
+                            modif += mod+"-"
+                    else:
+                        modif += mod+"-"
             text += "  <"+modif+vals["button"]+"-click> "+vals["text"]+"\n"
     return text
 

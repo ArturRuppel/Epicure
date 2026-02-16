@@ -139,7 +139,8 @@ class Preferences():
         sc["text"] = fulltext
         sc["button"] = button
         if modifiers is not None:
-            sc["modifiers"] = modifiers
+            sc["modifiers"] = ["Control" if item=="Command" else item for item in modifiers] 
+
 
     def load_default_shortcuts( self ):
         """ Load all default shortcuts """
@@ -158,12 +159,12 @@ class Preferences():
         self.add_key_shortcut( "Labels", shortname="swap mode", fulltext="then <"+self.ctl+">+Left click on one cell to another to swap their values", key="w" )
 
         self.add_click_shortcut( "Labels", shortname="erase", fulltext="erase the cell under the click", button="Right", modifiers=None )
-        self.add_click_shortcut( "Labels", shortname="merge", fulltext="drag-click from one cell to another to merge them", button="Left", modifiers=[self.ctl] )
-        self.add_click_shortcut( "Labels", shortname="split accross", fulltext="drag-click in the cell to split into 2 cells ", button="Right", modifiers=[self.ctl] )
+        self.add_click_shortcut( "Labels", shortname="merge", fulltext="drag-click from one cell to another to merge them", button="Left", modifiers=["Control"] )
+        self.add_click_shortcut( "Labels", shortname="split accross", fulltext="drag-click in the cell to split into 2 cells ", button="Right", modifiers=["Control"] )
         self.add_click_shortcut( "Labels", shortname="split draw", fulltext="drag-click draw a junction to split in 2 cells", button="Right", modifiers=["Alt"] )
         self.add_click_shortcut( "Labels", shortname="redraw junction", fulltext="drag-click draw a junction to correct it", button="Left", modifiers=["Alt"] )
         self.add_key_shortcut( "Labels", shortname="draw junction mode", fulltext="Draw junction(s) mode ON", key="j" )
-        self.add_click_shortcut( "Labels", shortname="drawing junction", fulltext="Draw junction mode ON. Drag-click draw a junction to create new cell(s)", button="Left", modifiers=[self.ctl] )
+        self.add_click_shortcut( "Labels", shortname="drawing junction", fulltext="Draw junction mode ON. Drag-click draw a junction to create new cell(s)", button="Left", modifiers=["Control"] )
         
         ## Seeds (manual segmentation) shortcuts
         self.add_key_shortcut( "Seeds", shortname="new seed", fulltext="<key shortcut> then left-click to place a seed", key="e" )
@@ -174,10 +175,10 @@ class Preferences():
         
         ## events edition shortcuts
         self.add_key_shortcut( "Events", shortname="next", fulltext="zoom on next event", key="Space" )
-        self.add_click_shortcut( "Events", shortname="zoom", fulltext="Zoom on the clicked event", button="Left", modifiers=[self.ctl, "Alt"] )
-        self.add_click_shortcut( "Events", shortname="delete", fulltext="Remove the clicked event", button="Right", modifiers=[self.ctl, "Alt"] )
-        self.add_click_shortcut( "Events", shortname="add division", fulltext="add a division: drag-click from first to second daugther", button="Left", modifiers=[self.ctl, "Shift"] )
-        self.add_click_shortcut( "Events", shortname="add extrusion", fulltext="add an extrusion: click on the last cell of the track", button="Right", modifiers=[self.ctl, "Shift"] )
+        self.add_click_shortcut( "Events", shortname="zoom", fulltext="Zoom on the clicked event", button="Left", modifiers=["Control", "Alt"] )
+        self.add_click_shortcut( "Events", shortname="delete", fulltext="Remove the clicked event", button="Right", modifiers=["Control", "Alt"] )
+        self.add_click_shortcut( "Events", shortname="add division", fulltext="add a division: drag-click from first to second daugther", button="Left", modifiers=["Control", "Shift"] )
+        self.add_click_shortcut( "Events", shortname="add extrusion", fulltext="add an extrusion: click on the last cell of the track", button="Right", modifiers=["Control", "Shift"] )
 
         ## Tracks edition shortcuts
         self.add_key_shortcut( "Tracks", shortname="show", fulltext="show/hide the tracks", key="r" )
@@ -186,12 +187,12 @@ class Preferences():
         self.add_click_shortcut( "Tracks", shortname="merge first", fulltext="+track mode ON. Merge tracks: select the first", button="Left" )
         self.add_click_shortcut( "Tracks", shortname="merge second", fulltext="+trackmode ON. Merge tracks: selec the second", button="Right" )
         self.add_click_shortcut( "Tracks", shortname="split track", fulltext="+trackmode ON. Split the track temporally in 2", button="Right", modifiers=["Shift"] )
-        self.add_click_shortcut( "Tracks", shortname="start manual", fulltext="+trackmode ON. Start manual tracking, clicking on cells", button="Left", modifiers=[self.ctl] )
-        self.add_click_shortcut( "Tracks", shortname="end manual", fulltext="+trackmode ON. Finish manual tracking", button="Right", modifiers=[self.ctl] )
+        self.add_click_shortcut( "Tracks", shortname="start manual", fulltext="+trackmode ON. Start manual tracking, clicking on cells", button="Left", modifiers=["Control"] )
+        self.add_click_shortcut( "Tracks", shortname="end manual", fulltext="+trackmode ON. Finish manual tracking", button="Right", modifiers=["Control"] )
         self.add_click_shortcut( "Tracks", shortname="interpolate first", fulltext="+trackmode ON. Interpolate temporally labels: select first", button="Left", modifiers=["Alt"] )
         self.add_click_shortcut( "Tracks", shortname="interpolate second", fulltext="+trackmode ON. Interpolate temporally labels: select second", button="Right", modifiers=["Alt"] )
         self.add_click_shortcut( "Tracks", shortname="swap", fulltext="+trackmode ON. Drag click to swap 2 tracks from current frame", button="Left", modifiers=["Shift"] )
-        self.add_click_shortcut( "Tracks", shortname="delete", fulltext="+trackmode ON. Delete all the track from current frame", button="Right", modifiers=[self.ctl, "Alt"]  )
+        self.add_click_shortcut( "Tracks", shortname="delete", fulltext="+trackmode ON. Delete all the track from current frame", button="Right", modifiers=["Control", "Alt"]  )
 
         ## Visualisation option shortcuts
         self.add_key_shortcut( "Display", shortname="vis. segmentation", fulltext="show/hide segmentation layer", key="b" )
@@ -202,11 +203,11 @@ class Preferences():
         self.add_key_shortcut( "Display", shortname="skeleton", fulltext="show/hide/update segmentation skeleton", key="k" )
         self.add_key_shortcut( "Display", shortname="show side", fulltext="view layers side by side on/off", key="z" )
         self.add_key_shortcut( "Display", shortname="grid", fulltext="show/hide grid", key="g" )
-        self.add_key_shortcut( "Display", shortname="increase", fulltext="increase label contour size", key=self.ctl+"-c" )
-        self.add_key_shortcut( "Display", shortname="decrease", fulltext="decrease label contour size", key=self.ctl+"-d" )
+        self.add_key_shortcut( "Display", shortname="increase", fulltext="increase label contour size", key="Control-c" )
+        self.add_key_shortcut( "Display", shortname="decrease", fulltext="decrease label contour size", key="Control-d" )
         
         ## Info shortcuts
-        self.add_key_shortcut( "Info", shortname="measure length", fulltext="draw and measure a line length", key=self.ctl+"-i" )
+        self.add_key_shortcut( "Info", shortname="measure length", fulltext="draw and measure a line length", key="Control"+"-i" )
     
     
     def load_default_settings( self ):
