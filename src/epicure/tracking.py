@@ -10,9 +10,15 @@ except ImportError:
     pass
 import laptrack
 if ut.version_above(laptrack, "0.16"):
-    from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph# type: ignore
+    try:    
+        from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph# type: ignore
+    except ImportError:
+        from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
 else:
-    from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
+    try:    
+        from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
+    except ImportError:
+        from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph # type: ignore
 from napari.utils import progress # type: ignore
 from skimage.transform import warp
 from skimage.registration import optical_flow_ilk
