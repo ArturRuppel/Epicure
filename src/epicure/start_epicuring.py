@@ -97,6 +97,8 @@ def gui_files(movie=None, movie_path="", segmented=None):
         get_files.allow_gaps.value = bool(Epic.epi_metadata["Allow gaps"])
         get_files.verbose_level.value = int(Epic.epi_metadata["Verbose"])
         get_files.call_button.enabled = True
+        if "MainChannel" in Epic.epi_metadata:
+            get_files.junction_chanel.value = int(Epic.epi_metadata["MainChannel"])
 
     def show_metatdata(show=True):
         """ Show or update the metadata parameters """
@@ -131,6 +133,8 @@ def gui_files(movie=None, movie_path="", segmented=None):
         get_files.segment_with_epyseg.visible = True
         get_files.allow_gaps.value = bool(Epic.epi_metadata["Allow gaps"])
         get_files.verbose_level.value = int(Epic.epi_metadata["Verbose"])
+        if "MainChannel" in Epic.epi_metadata:
+            get_files.junction_chanel.value = int(Epic.epi_metadata["MainChannel"])
         get_files.call_button.enabled = True
         ut.show_duration(start_time, header="Movie loaded in ")
 
