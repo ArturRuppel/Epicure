@@ -45,10 +45,10 @@ dependencies = [
 ]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/gletort/Epicure/issues"
-"Documentation" = "https://gletort.github.io/Epicure/"
-"Source Code" = "https://github.com/gletort/Epicure"
-"User Support" = "https://github.com/gletort/Epicure/issues"
+"Bug Tracker" = "https://github.com/Image-Analysis-Hub/Epicure/issues"
+"Documentation" = "https://image-analysis-hub.github.io/Epicure/"
+"Source Code" = "https://github.com/Image-Analysis-Hub/Epicure"
+"User Support" = "https://github.com/Image-Analysis-Hub/Epicure/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
