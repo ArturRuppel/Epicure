@@ -1,5 +1,6 @@
 from qtpy.QtWidgets import QVBoxLayout, QWidget # type: ignore
 from epicure.laptrack_centroids import LaptrackCentroids
+import epicure.Utils as ut
 laptrack_over = False
 try:    
     from epicure.laptrack_overlaps import LaptrackOverlaps
@@ -7,14 +8,23 @@ try:
 except ImportError:
     print("Laptrack overlap not available in your laptrack version. Only the centroid option will be proposed. Update laptrack to 0.16 to have it")
     pass
-from laptrack.data_conversion import convert_split_merge_df_to_napari_graph # type: ignore
+import laptrack
+if ut.version_above(laptrack, "0.16"):
+    try:    
+        from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph# type: ignore
+    except ImportError:
+        from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
+else:
+    try:    
+        from laptrack.data_conversion import convert_split_merge_df_to_napari_graph as to_napari_graph # type: ignore
+    except ImportError:
+        from laptrack.data_conversion import split_merge_df_to_napari_graph as to_napari_graph # type: ignore
 from napari.utils import progress # type: ignore
 from skimage.transform import warp
 from skimage.registration import optical_flow_ilk
 import pandas as pd
 import numpy as np
 import scipy.ndimage as ndi
-import epicure.Utils as ut
 import epicure.epiwidgets as wid
 from joblib import Parallel, delayed
 
@@ -650,6 +660,12 @@ class Tracking(QWidget):
                     if vals not in self.track_data[:,0]:
                         del self.graph[key]
 
+    def set_graph(self, graph):
+        """ Set the current graph (eg imported from TrackMate XML file) """
+        self.graph = graph
+        ## set the divisions from the graph
+        self.epicure.inspecting.get_divisions()
+
     def update_graph_frames( self, track_id, frames ):
         """ Update graph when one label was deleted at given frames """
         fframe = np.min(frames)
@@ -1038,7 +1054,7 @@ class Tracking(QWidget):
         self.change_labels( track_df )
 
         # create graph of division/merging
-        self.graph = convert_split_merge_df_to_napari_graph(split_df, merge_df)
+        self.graph = to_napari_graph(split_df, merge_df)
 
         progress_bar.update(indprogress+1)
         

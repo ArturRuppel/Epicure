@@ -4,6 +4,7 @@
 
 import numpy as np
 import os, sys
+from sys import platform
 import time
 import math
 from skimage.measure import label, regionprops, find_contours, regionprops_table
@@ -21,7 +22,6 @@ from scipy import signal
 from skimage.morphology import medial_axis
 import pandas as pd
 from epicure.laptrack_centroids import LaptrackCentroids
-from bioio import BioImage
 import tifffile as tif # type: ignore
 import napari
 from napari.utils import progress # type: ignore
@@ -79,6 +79,10 @@ def close_progress( viewer, progress_bar ):
     progress_bar.close()
     show_progress( viewer, False)
 
+def version_above( module, version ):
+    """ Compare if python module is above a given version """
+    return Version(module.__version__) > Version(version)
+
 #### Handle versions of napari
 def version_napari_above( compare_version ):
     """ Compare if the current version of napari is above given version """
@@ -134,6 +138,7 @@ def create_text_window( name ):
     blabla.name = name 
     blabla.show()
     return blabla
+
 
 def napari_shortcuts():
     """ Write main napari shortcuts list """
@@ -259,6 +264,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
             print("Opening Tif image "+str(imagepath)+" with bioio-tifffile")
         import bioio_tifffile
         if version_python_minor(10):
+            from bioio import BioImage
             img = BioImage(imagepath, reader=bioio_tifffile.Reader)
         else:
             ## python 3.9 or under
@@ -270,6 +276,7 @@ def open_image(imagepath, get_metadata=False, verbose=True):
         if verbose:
             print("Opening "+extension+" image "+str(imagepath)+" with bioio-bioformats")
         if version_python_minor(10):
+            from bioio import BioImage
             img = BioImage(imagepath, reader=bioio_bioformats.Reader)
         else:
             ## python 3.9 or under
@@ -1111,6 +1118,13 @@ def shortcut_click_match( shortcut, event ):
         if len(event.modifiers) > 0:
             return False
         return True
+
+def is_darwin():
+    """ Test if OS is MacOS or not """
+    try:
+        return platform.lower() == "darwin"
+    except:
+        return False
         
 def print_shortcuts( shortcut_group ):
     """ Put to text the subset of shortcuts """
@@ -1123,7 +1137,13 @@ def print_shortcuts( shortcut_group ):
             if "modifiers" in vals.keys():
                 modifiers = vals["modifiers"]
                 for mod in modifiers:
-                    modif += mod+"-"
+                    if mod == "Control":
+                        if is_darwin():
+                            modif += "Command"+"-"
+                        else:
+                            modif += mod+"-"
+                    else:
+                        modif += mod+"-"
             text += "  <"+modif+vals["button"]+"-click> "+vals["text"]+"\n"
     return text
 

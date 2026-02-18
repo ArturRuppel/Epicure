@@ -54,6 +54,12 @@ class Preferences():
     def __init__( self ):
         """ Initialise file path, load current preferences"""
         self.build_preferences_path()
+        print("Running on "+platform.lower())
+        
+        self.ctl = "Control"
+        #self.alt = "Alt"
+        if platform.lower() == "darwin":
+            self.ctl = "Command"
 
         self.load_default_shortcuts()
         self.load_default_settings()
@@ -133,7 +139,8 @@ class Preferences():
         sc["text"] = fulltext
         sc["button"] = button
         if modifiers is not None:
-            sc["modifiers"] = modifiers
+            sc["modifiers"] = ["Control" if item=="Command" else item for item in modifiers] 
+
 
     def load_default_shortcuts( self ):
         """ Load all default shortcuts """
@@ -149,7 +156,7 @@ class Preferences():
         ## Labels edition (static) shortcuts
         self.add_key_shortcut( "Labels", shortname="unused paint", fulltext="set the current label to unused value and go to paint mode", key="n" )
         self.add_key_shortcut( "Labels", shortname="unused fill", fulltext="set the current label to unused value and go to fill mode", key="Shift-n" )
-        self.add_key_shortcut( "Labels", shortname="swap mode", fulltext="then <Control>+Left click on one cell to another to swap their values", key="w" )
+        self.add_key_shortcut( "Labels", shortname="swap mode", fulltext="then <"+self.ctl+">+Left click on one cell to another to swap their values", key="w" )
 
         self.add_click_shortcut( "Labels", shortname="erase", fulltext="erase the cell under the click", button="Right", modifiers=None )
         self.add_click_shortcut( "Labels", shortname="merge", fulltext="drag-click from one cell to another to merge them", button="Left", modifiers=["Control"] )
@@ -200,7 +207,7 @@ class Preferences():
         self.add_key_shortcut( "Display", shortname="decrease", fulltext="decrease label contour size", key="Control-d" )
         
         ## Info shortcuts
-        self.add_key_shortcut( "Info", shortname="measure length", fulltext="draw and measure a line length", key="Control-i" )
+        self.add_key_shortcut( "Info", shortname="measure length", fulltext="draw and measure a line length", key="Control"+"-i" )
     
     
     def load_default_settings( self ):
@@ -241,6 +248,10 @@ class ShortCut( QWidget ):
         super().__init__()
         
         layout = QVBoxLayout()
+        self.ctl = "Control"
+        #self.alt = "Alt"
+        if platform.lower() == "darwin":
+            self.ctl = "Command"
 
         self.sc = pref.get_shortcuts()
         ## choice list to choose which shortcuts to edit
@@ -284,9 +295,8 @@ class ShortCut( QWidget ):
                         cur_modif.addItem("Control")
                         cur_modif.addItem("Shift")
                         cur_modif.addItem("Alt")
-                        if platform == "darwin":
+                        if platform.lower() == "darwin":
                             cur_modif.addItem("Command")
-                        cur_modif.addItem("Alt")
                         new_line.addWidget( cur_modif )
                         cur_modif.setCurrentText( modif )
                         self.sc_guis[sc_type][ shortname+"modifiers"+str(ind) ] = cur_modif
