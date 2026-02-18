@@ -54,12 +54,12 @@ def show_debug(message):
 
 def show_documentation():
     import webbrowser
-    webbrowser.open_new_tab("https://gletort.github.io/Epicure/")
+    webbrowser.open_new_tab("https://image-analysis-hub.github.io/Epicure/")
     return
 
 def show_documentation_page(page):
     import webbrowser
-    webbrowser.open_new_tab("https://gletort.github.io/Epicure/"+page)
+    webbrowser.open_new_tab("https://image-analysis-hub.github.io/Epicure/"+page)
     return
 
 def show_progress( viewer, show ):
