@@ -8,7 +8,7 @@
 
 ![EpiCure logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/epicure_logo.png "EpiCure logo")
 ![CNRS logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_cnrs.png "CNRS logo")
-![DSCB logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_DSCB.png "DSCB logo")
+![DSCB logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_dscb.png "DSCB logo")
 
 **Napari plugin to ease manual correction of epithelia segmentation in movies.**
 
