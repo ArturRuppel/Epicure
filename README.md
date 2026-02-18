@@ -1,6 +1,6 @@
 # EpiCure
 
-[![License BSD-3](https://img.shields.io/pypi/l/epicure.svg?color=green)](https://github.com/gletort/Epicure/-/blob/main/LICENSE)
+[![License BSD-3](https://img.shields.io/pypi/l/epicure.svg?color=green)](https://github.com/Image-Analysis-Hub/Epicure/-/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/epicure.svg?color=green)](https://pypi.org/project/epicure)
 [![Python Version](https://img.shields.io/pypi/pyversions/epicure.svg?color=green)](https://python.org)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/epicure)](https://napari-hub.org/plugins/epicure)
@@ -46,7 +46,7 @@ Tracking options are proposed in EpiCure:
 * Laptrack overlaps
 
 ## Usage
-Refer to the [documentation](https://gletort.github.io/Epicure/) for documentation of the different steps possible in the pipeline.
+Refer to the [documentation](https://image-analysis-hub.github.io/Epicure/) for documentation of the different steps possible in the pipeline.
 
 ## References
 
