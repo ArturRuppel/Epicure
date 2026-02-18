@@ -5,14 +5,12 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/epicure.svg?color=green)](https://python.org)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/epicure)](https://napari-hub.org/plugins/epicure)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13952184.svg)](https://doi.org/10.5281/zenodo.13952184)
+![CNRS logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_cnrs.png "CNRS logo")
+![DSCB logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_dscb.png "DSCB logo")
 
 **Napari plugin to ease manual correction of epithelia segmentation in movies.**
 ![EpiCure logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/epicure_logo.png "EpiCure logo")
 
-<p style='text-align: right;'>
-![CNRS logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_cnrs.png "CNRS logo")
-![DSCB logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_dscb.png "DSCB logo")
-</p>
 
 
 To analyse individual cell trajectory from epithelia movies marked for cell-cell junctions, a very precise segmentation and tracking is required.
