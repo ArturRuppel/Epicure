@@ -1,12 +1,14 @@
 # EpiCure
 
-[![License BSD-3](https://img.shields.io/pypi/l/epicure.svg?color=green)](https://github.com/gletort/Epicure/-/blob/main/LICENSE)
+[![License BSD-3](https://img.shields.io/pypi/l/epicure.svg?color=green)](https://github.com/Image-Analysis-Hub/Epicure/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/epicure.svg?color=green)](https://pypi.org/project/epicure)
 [![Python Version](https://img.shields.io/pypi/pyversions/epicure.svg?color=green)](https://python.org)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/epicure)](https://napari-hub.org/plugins/epicure)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13952184.svg)](https://doi.org/10.5281/zenodo.13952184)
 
-![EpiCure logo](https://github.com/gletort/Epicure/blob/main/docs/imgs/epicure_logo.png "EpiCure logo")
+![EpiCure logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/epicure_logo.png "EpiCure logo")
+![CNRS logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_cnrs.png "CNRS logo")
+![DSCB logo](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_DSCB.png "DSCB logo")
 
 **Napari plugin to ease manual correction of epithelia segmentation in movies.**
 
@@ -19,9 +21,9 @@ Several features are proposed to ease the manual correction of the segmented mov
 EpiCure detect segmentation errors by taking advantage of temporal information. 
 When a correction is done at a given frame, EpiCure relink the track to adjust for the changes.
 
- > **See the full [documentation here](https://gletort.github.io/Epicure/)**
+ > **See the full [documentation here](https://image-analysis-hub.github.io/Epicure/)**
 
-![EpiCure interface](https://github.com/gletort/Epicure/blob/main/docs/imgs/EpiGen.png "EpiCure interface")
+![EpiCure interface](https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/EpiGen.png "EpiCure interface")
 
 ## Installation
 
@@ -46,7 +48,7 @@ Tracking options are proposed in EpiCure:
 * Laptrack overlaps
 
 ## Usage
-Refer to the [documentation](https://gletort.github.io/Epicure/) for documentation of the different steps possible in the pipeline.
+Refer to the [documentation](https://image-analysis-hub.github.io/Epicure/) for documentation of the different steps possible in the pipeline.
 
 ## References
 
@@ -54,12 +56,18 @@ If you use EpiCure, thank you for citing our work:
 
 EpiCure is not published yet, you can cite it using Zenodo for now: https://doi.org/10.5281/zenodo.13952184
 
-
-## Issues
-If you encounter a code related issue using EpiCure, please [file an issue](https://github.com/gletort/epicure/issues) in this repository.
+## Contributing and Feedback
+EpiCure is mainly developed in CNRS UMR3738, in the [Developmental and Stem Cell Biology Department](https://research.pasteur.fr/en/department/developmental-stem-cell-biology/) of Institut Pasteur.
 If you have a question on using EpiCure or ask to add a feature, either file an issue or write in the [imagesc forum](https://forum.image.sc/).
 
+Any contribution is most welcome. 
+Do not hesitate to contact us beforehand through [filing an issue](https://github.com/Image-Analysis-Hub/epicure/issues/) (choose "Other questions/comments" type).
+To suggest the addition of a new feature, you can also contact us by filing an issue choosing the "Feature request" option.
+
+If you encounter a code related issue using EpiCure, please [file an issue](https://github.com/Image-Analysis-Hub/epicure/issues) in this repository.
+
+
 [napari]: https://github.com/napari/napari
-[file an issue]: https://github.com/gletort/epicure/issues
+[file an issue]: https://github.com/Image-Analysis-Hub/epicure/issues
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/

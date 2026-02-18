@@ -653,6 +653,7 @@ class EpiCure:
         ut.writeTif(self.seg, outname, self.epi_metadata["ScaleXY"], imtype, what="Segmentation")
         epiname = os.path.join(self.outdir, self.imgname + "_epidata.pkl")
         outfile = open(epiname, "wb")
+        self.epi_metadata["MainChannel"] = self.main_channel 
         epidata = {}
         epidata["EpiMetaData"] = self.epi_metadata
         if self.groups is not None:
