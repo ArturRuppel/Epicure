@@ -6,8 +6,6 @@
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/epicure)](https://napari-hub.org/plugins/epicure)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13952184.svg)](https://doi.org/10.5281/zenodo.13952184)
 
-<img src=https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_cnrsb.png align="right"/>
-<img src=https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/logo_dscb.png align="right"/>
 
 <img src=https://github.com/Image-Analysis-Hub/Epicure/blob/main/docs/imgs/epicure_logo.png caption="EpiCure logo" align="left"/> 
 </br></br>
