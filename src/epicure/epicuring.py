@@ -1,9 +1,21 @@
 """
-    EpiCure main.
+    Load intensity movie from napari layer and extract metadata.
+    Handles various image formats (2D, 3D, 4D) with different dimension orders.
+    Supports temporal, channel, and z-stack dimensions.
+        layer: napari layer object with image data and scale information
+        imgpath (str): File path to the image
+        tuple: (caxis, cval) where caxis is channel axis index or None,
+               cval is number of channels or 0
+        - Resets internal state via reset()
+        - Updates epi_metadata with MovieFile and ScaleXY
+        - Sets img and mov attributes
+        - Renames layer to "Movie", removes existing Movie layer
+        - Updates imgshape, imgshape2D, nframes
+    **EpiCure main class.**
 
     Open and initialize the files.
-
-    Launch the main widget composed of the segmentation and tracking editing features
+    Launch the main widget composed of the segmentation and tracking editing features. 
+    All other classes are linked to this one.
 """
 import numpy as np
 import os, time, pickle
@@ -28,17 +40,27 @@ import epicure.tm_loader as tm
 
 class EpiCure:
     def __init__(self, viewer=None):
+        """
+        Initialize the EpiCure viewer instance.
+
+        :param: viewer (napari.Viewer, optional): An existing napari Viewer instance to use.
+                If None, a new Viewer instance will be created with show=False.
+                Defaults to None.
+        """
         self.viewer = viewer
+        """ Napari viewer that is used for this session """
         if self.viewer is None:
             self.viewer = napari.Viewer(show=False)
         self.viewer.title = "Napari - EpiCure"
         self.reset()
 
     def reset(self):
-        """ Reset parameters """
+        """ Reset all the parameters to the default values """
         self.init_epicure_metadata()  ## initialize metadata variables (scalings, channels)
         self.img = None
+        """ data of the raw movie """
         self.inspecting = None
+        """ interface for inspection options """
         self.others = None
         self.imgshape2D = None  ## width, height of the image
         self.nframes = None  ## Number of time frames
@@ -70,7 +92,7 @@ class EpiCure:
 
 
     def init_epicure_metadata(self):
-        """Returns metadata to save"""
+        """ Fills metadata with default values """
         ## scalings and unit names
         self.epi_metadata = {}
         self.epi_metadata["ScaleXY"] = 1
@@ -95,11 +117,34 @@ class EpiCure:
         return None
 
     def set_thickness(self, thick):
-        """Thickness of junctions (half thickness)"""
+        """
+        Thickness of junctions (half thickness)
+        
+        :param: thick set thickness value to input value
+        """
         self.thickness = thick
     
     def movie_from_layer(self, layer, imgpath):
-        """Prepare the intensity movie from opened layer, and get metadata"""
+        """
+        Prepare the intensity movie from opened layer, and get metadata.
+        
+        Resets the internal state, loads image data from the provided layer,
+        handles temporal and channel dimensions, and prepares the movie for processing.
+        
+        It extracts metadata including file path and pixel scale, and attempts to handle various
+        image formats (2D, 3D, 4D with different dimension orders).
+        
+        :param: layer: A napari layer object containing the image data and scale information.
+                The layer's data attribute should contain the image array.
+        :param: imgpath (str): Absolute or relative file path to the image file being loaded.
+        
+        :return:
+            A tuple containing:
+                - caxis (int or None): The axis index corresponding to the channel dimension,
+                  or None if no multiple channels are detected.
+                - cval (int): The number of channels found in the image, or 0 if no channels
+                  are detected.
+        """
         self.reset() ## reload everything 
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
         ## if the layer is scaled, should be the right scale
@@ -137,7 +182,11 @@ class EpiCure:
 
 
     def load_movie(self, imgpath):
-        """Load the intensity movie, and get metadata"""
+        """ 
+            Load the intensity movie, and get metadata
+
+            :param: imgpath: full path to where the movie file is    
+        """
         self.reset() ## reload everything 
         self.epi_metadata["MovieFile"] = os.path.abspath(imgpath)
         self.img, nchan, self.epi_metadata["ScaleXY"], self.epi_metadata["UnitXY"], self.epi_metadata["ScaleT"], self.epi_metadata["UnitT"] = ut.open_image(
@@ -173,6 +222,7 @@ class EpiCure:
 
 
     def quantiles(self):
+        """ Returns the quantiles 1% and 99.999% of the raw image to set the display """
         return tuple(np.quantile(self.img, [0.01, 0.9999]))
 
     def set_verbose(self, verbose):
@@ -181,7 +231,10 @@ class EpiCure:
         self.epi_metadata["Verbose"] = verbose
 
     def set_gaps_option(self, allow_gap):
-        """Set the mode for gap allowing/forbid in tracks"""
+        """Set the mode for gap allowing/forbid in tracks
+        
+        :param: allow_gap: boolean. Indicates if gap in tracks (missing cell in one or more frames) should be allowed or not.
+        """
         self.epi_metadata["Allow gaps"] = allow_gap
         self.forbid_gaps = not allow_gap
 
