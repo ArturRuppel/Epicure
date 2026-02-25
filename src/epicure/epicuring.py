@@ -1,16 +1,4 @@
 """
-    Load intensity movie from napari layer and extract metadata.
-    Handles various image formats (2D, 3D, 4D) with different dimension orders.
-    Supports temporal, channel, and z-stack dimensions.
-        layer: napari layer object with image data and scale information
-        imgpath (str): File path to the image
-        tuple: (caxis, cval) where caxis is channel axis index or None,
-               cval is number of channels or 0
-        - Resets internal state via reset()
-        - Updates epi_metadata with MovieFile and ScaleXY
-        - Sets img and mov attributes
-        - Renames layer to "Movie", removes existing Movie layer
-        - Updates imgshape, imgshape2D, nframes
     **EpiCure main class.**
 
     Open and initialize the files.
