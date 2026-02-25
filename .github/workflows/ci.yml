@@ -34,9 +34,7 @@ jobs:
             mkdocs-material-
       - run: pip install mkdocs-material 
 
-
-      - run: mkdocs gh-deploy --force
-
       - run: pip install pdoc
       - run: pip install -e .
       - run: pdoc epicure -o docs/api
+      - run: mkdocs gh-deploy --force
