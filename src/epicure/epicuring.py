@@ -1,3 +1,10 @@
+"""
+    EpiCure main.
+
+    Open and initialize the files.
+
+    Launch the main widget composed of the segmentation and tracking editing features
+"""
 import numpy as np
 import os, time, pickle
 import napari
@@ -17,12 +24,6 @@ from epicure.outputing import Outputing
 from epicure.displaying import Displaying
 from epicure.preferences import Preferences
 import epicure.tm_loader as tm
-
-"""
-    EpiCure main
-    Open and initialize the files
-    Launch the main widget composed of the segmentation and tracking editing features
-"""
 
 
 class EpiCure:
