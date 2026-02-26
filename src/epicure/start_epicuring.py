@@ -1,3 +1,9 @@
+"""
+   **Start EpiCure plugin**
+
+   Open the interface to select the movie and associated segmentation to process
+"""
+
 from napari import current_viewer
 from magicgui import magicgui
 from napari.utils.history import get_save_history, update_save_history 
@@ -6,10 +12,6 @@ import epicure.Utils as ut
 from epicure.epicuring import EpiCure
 import multiprocessing
 
-"""
-   Start EpiCure plugin
-   Open the interface to select the movie and associated segmentation to process
-"""
 
 def start_from_layers():
     """ Start EpiCure from already opened image and segmentation layers """

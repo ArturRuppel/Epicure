@@ -1,3 +1,10 @@
+"""
+    **EpiCure output interface**
+
+    Handles the onglet `Output` of EpiCure interface.
+    This panel offers option to export the results in various format or to analyse directly the results in the plugin and display the measures tables, plot and save it.
+
+"""
 import pandas as pand
 import numpy as np
 import roifile
@@ -23,6 +30,7 @@ from joblib import Parallel, delayed
 class Outputing(QWidget):
 
     def __init__(self, napari_viewer, epic):
+        """ Initialisation of the interface """
         super().__init__()
         self.viewer = napari_viewer
         self.epicure = epic

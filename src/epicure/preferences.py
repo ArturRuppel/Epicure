@@ -1,3 +1,10 @@
+"""
+    **EpiCure preferences functions**
+
+    Proposes to set and save the shortcut preferences so that each user can choose his/her favorite keys.
+    This is loaded from and saved to a file called `epicure_preferences.pkl` placed in the home directory of the user, in the .napari folder. 
+"""
+
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QTabWidget, QWidget, QComboBox, QLabel, QLineEdit, QGroupBox, QHBoxLayout, QColorDialog
 #from qtpy.QtGui import QColor
 import napari

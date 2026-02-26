@@ -145,9 +145,11 @@ def found_segfile( filepath ):
     return os.path.exists( filepath )
     
 def get_filename(outdir, imgname):
+    """ Join the directory with the filename """
     return os.path.join( outdir, imgname )
 
 def napari_info(text):
+    """ Use napari information window to show a message """
     show_info(text)
 
 def create_text_window( name ):
@@ -177,13 +179,21 @@ def napari_shortcuts():
     return text
 
 def removeOverlayText(viewer):
+    """ Remove all texts that was overlaid on the main window """
     viewer.text_overlay.text = trans._("")
     viewer.text_overlay.visible = False
 
 def getOverlayText(viewer):
+    """ Returns the current overlay text """
     return viewer.text_overlay.text
 
 def setOverlayText(viewer, text, size=12 ):
+    """ 
+    Set the overlay text
+    :param: viewer: current napari view
+    :param: text: new text to display as overlay
+    :param: size: size of the displayed text
+    """
     viewer.text_overlay.text = trans._(text)
     viewer.text_overlay.position = "top_left"
     viewer.text_overlay.visible = True
@@ -192,6 +202,11 @@ def setOverlayText(viewer, text, size=12 ):
     viewer.text_overlay.opacity = 1
 
 def showOverlayText(viewer, vis=None):
+    """
+    Show the overlay text on/off
+    :param: viewer: current napari viewer
+    :param: vis: show it alternatively on/off if vis is None. Or can be a boolean to force the showing or not
+    """
     if vis is None:
         viewer.text_overlay.visible = not viewer.text_overlay.visible
     else:
@@ -234,6 +249,7 @@ def set_visibility(viewer, layname, vis):
         viewer.layers[layname].visible = vis
 
 def remove_layer(viewer, layname):
+    """ Remove a layer with specific name from the viewer """
     if layname in viewer.layers:
         try:
             viewer.layers.remove(layname)
@@ -242,6 +258,7 @@ def remove_layer(viewer, layname):
             print(e)
 
 def remove_widget(viewer, widname):
+    """ Remove a widget from the viewer """
     if widname in viewer.window._dock_widgets:
         wid = viewer.window._dock_widgets[widname]
         wid.setDisabled(True)
@@ -397,6 +414,7 @@ def getCellValue(label_layer, event):
     return label
 
 def setCellValue(layer, label_layer, event, newvalue, layer_frame=None, label_frame=None):
+    """ Get the cell concerned by the event and replace its value by new one"""
     # get concerned label (under the cursor), layer has to be visible for this
     vis = label_layer.visible
     if vis == False:
