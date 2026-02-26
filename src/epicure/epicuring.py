@@ -214,7 +214,11 @@ class EpiCure:
         return tuple(np.quantile(self.img, [0.01, 0.9999]))
 
     def set_verbose(self, verbose):
-        """Set verbose level"""
+        """
+        Set verbose level
+        
+        :param: verbose: amount of message that will be displayed in the Terminal console, from 0 (none) to 4 (a lot, for debugging)
+        """
         self.verbose = verbose
         self.epi_metadata["Verbose"] = verbose
 
@@ -638,6 +642,11 @@ class EpiCure:
         return self.inspecting.nb_type("division")
 
     def set_contour(self, width):
+        """ 
+        Set the width of the contour of the cells to display the segmentation
+
+        :param: width: width of the contours of the segmentation (napari contour parameter). If 0 the cell will be filled by its label 
+        """
         self.seglayer.contour = width
 
     ############ Layers
@@ -667,6 +676,9 @@ class EpiCure:
         self.finish_update()
 
     def finish_update(self, contour=None):
+        """
+        After doing modifications on some layer(s), select back the main layer Segmentation as active (important for shortcut bindings) and refresh it
+        """
         if contour is not None:
             self.seglayer.contour = contour
         ut.set_active_layer(self.viewer, "Segmentation")
@@ -691,6 +703,9 @@ class EpiCure:
                 ut.show_warning("Could not read EpiCure metadata file " + epiname)
 
     def save_epicures(self, imtype="float32"):
+        """
+        Save all the current data: the segmentation, the metadata (metadata of the image, last parameters used), the events and some display settings.
+        """
         outname = os.path.join(self.outdir, self.imgname + "_labels.tif")
         ut.writeTif(self.seg, outname, self.epi_metadata["ScaleXY"], imtype, what="Segmentation")
         epiname = os.path.join(self.outdir, self.imgname + "_epidata.pkl")
@@ -726,7 +741,11 @@ class EpiCure:
         return groups
 
     def read_graph_data(self, infile):
-        """Read the graph EpiCure data from opened file"""
+        """
+        Read the graph EpiCure data from opened pickle file
+
+        :param: infile: instance of pickle file being read. This will read the next part of the pickle file and load it in the track graph.
+        """
         try:
             graph = pickle.load(infile)
             if self.verbose > 0:
