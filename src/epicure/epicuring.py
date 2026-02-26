@@ -231,11 +231,19 @@ class EpiCure:
         self.forbid_gaps = not allow_gap
 
     def set_epithelia(self, epithelia):
-        """Set the mode for cell packing (touching or not especially)"""
+        """
+        Set the mode for cell packing (touching or not especially)
+        
+        :param: epithelia: boolean, True if cells are touching
+        """
         self.epi_metadata["EpithelialCells"] = epithelia
 
     def set_scalebar(self, show_scalebar):
-        """Show or not the scale bar"""
+        """
+        Show or not the scale bar, and set its value
+        
+        :param: show_scalebar: boolean, set the visibility of the scale bar
+        """
         self.epi_metadata["Scale bar"] = show_scalebar
         if self.viewer is not None:
             self.viewer.scale_bar.visible = show_scalebar
@@ -245,7 +253,14 @@ class EpiCure:
             self.viewer.reset_view()
 
     def set_scales(self, scalexy, scalet, unitxy, unitt):
-        """Set the scaling units for outputs"""
+        """
+        Set the scaling units for outputs. Put the values in Epicure metadata object
+        
+        :param: scalexy: size of one pixel in X,Y directions
+        :param: scalet: duration of one frame (acquisition frequency)
+        :param: unitxy: name of the unit in which the scale is given
+        :param: unitt: name of the temporal unit in which the scale is given
+        """
         self.epi_metadata["ScaleXY"] = scalexy
         self.epi_metadata["ScaleT"] = scalet
         self.epi_metadata["UnitXY"] = unitxy
@@ -256,7 +271,12 @@ class EpiCure:
             ut.show_info("Movie scales set to " + str(self.epi_metadata["ScaleXY"]) + " " + self.epi_metadata["UnitXY"] + " and " + str(self.epi_metadata["ScaleT"]) + " " + self.epi_metadata["UnitT"])
 
     def set_chanel(self, chan, chanaxis):
-        """Update the movie to the correct chanel"""
+        """
+        Update the movie to the correct chanel
+        
+        :param: chan: channel in which the raw movie is 
+        :param: chanaxis: in which axis is the color channels information (usually format is TCYX, so will be 1)
+        """
         self.img = np.rollaxis(np.copy(self.mov), chanaxis, 0)[chan]
         if len(self.img.shape) == 2:
             self.img = np.expand_dims(self.img, axis=0)
