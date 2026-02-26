@@ -1,3 +1,16 @@
+"""
+    ** EpiCure - Inspect panel interface **
+
+    Handle supects and events detection layer.
+    Inspection functions propose to look for user selected features to detect potential errors in the segmentration from inspecting the tracks.
+
+    Extrusion events are detected as disappearance of a track & a cell size small enough.
+    Divisions events can be detected by the tracking algorithm directly and saved in the track graph, or they can be detected by the inspection as the disappearance of one track at the same time that two new tracks appear in the same area.
+
+    Inpsection could also be performed on a static image by looking at outlier values of a selected feature.
+"""
+
+
 import numpy as np
 from skimage import filters
 from skimage.measure import regionprops
@@ -9,14 +22,12 @@ import epicure.epiwidgets as wid
 import time
 from joblib import Parallel, delayed
 
-"""
-    EpiCure - Inspection interface
-    Handle supects, events detection layer
-"""
-
 class Inspecting(QWidget):
     
     def __init__(self, napari_viewer, epic):
+        """
+        Generate the graphical interface for the inspection panel, and initialize the events layer.
+        """
         super().__init__()
         self.viewer = napari_viewer
         self.epicure = epic
@@ -76,7 +87,7 @@ class Inspecting(QWidget):
         self.key_binding()
 
     def key_binding(self):
-        """ active key bindings for events options """
+        """ active key bindings (keyboard and mouse shortcuts) for events options """
         sevents = self.epicure.shortcuts["Events"]
         self.epicure.overtext["events"] = "---- Events editing ---- \n"
         self.epicure.overtext["events"] += ut.print_shortcuts( sevents )
@@ -417,6 +428,7 @@ class Inspecting(QWidget):
         self.events.face_color = feature
     
     def update_display(self):
+        """ Update the display of the events layer """
         self.events.refresh()
         self.color_events()
 

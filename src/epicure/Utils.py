@@ -1,5 +1,7 @@
 """
-    Diverse functions for EpiCure
+    **Diverse functions for EpiCure**
+
+    Proposes utility functions that do not depend on a class and can be usefull in several classes.
 """
 
 import numpy as np
@@ -53,11 +55,16 @@ def show_debug(message):
     print(message)
 
 def show_documentation():
+    """ Open browser on main EpiCure documentation page """
     import webbrowser
     webbrowser.open_new_tab("https://image-analysis-hub.github.io/Epicure/")
     return
 
 def show_documentation_page(page):
+    """ 
+        Open browser on the selected page of EpiCure documentation 
+        :param: page: name of the documentation page to go to (only the name of the page, without the full path)    
+    """
     import webbrowser
     webbrowser.open_new_tab("https://image-analysis-hub.github.io/Epicure/"+page)
     return
@@ -99,6 +106,17 @@ def get_directory(imagepath):
     return os.path.dirname(imagepath)
 
 def extract_names(imagepath, subname="epics", mkdir=True):
+    """
+        From the image file path, extracts the name of the directoties to work in
+
+        :param: imagepath: file path to the main raw movie
+        :param: subname (default: "epics"): name of the results directory where all will be saved
+        
+        :return: 
+            - name of the raw movie without the extension, that will be used to save all other files
+            - path to the directory where the raw movie is
+            - path to the results directory on which to save all outputs
+    """
     imgname = os.path.splitext(os.path.basename(imagepath))[0]
     imgdir = os.path.dirname(imagepath)
     resdir = os.path.join(imgdir, subname)
