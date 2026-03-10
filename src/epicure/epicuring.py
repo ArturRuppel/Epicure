@@ -56,6 +56,7 @@ class EpiCure:
         self.minsize = 4  ## smallest number of pixels in a cell
         self.verbose = 1  ## level of printing messages (None/few, normal, debug mode)
         self.event_class = ["division", "extrusion", "suspect"]  ## list of possible events
+        self.main_channel = 0  ## position of the main channel (raw movie) 
         
         self.overtext = dict()
         self.help_index = 1  ## current display index of help overlay
