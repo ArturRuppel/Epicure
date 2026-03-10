@@ -780,7 +780,7 @@ class Tracking(QWidget):
             )
         else:
             track_tables = [ ut.labels_to_table( frame, iframe) for iframe, frame in progress(enumerate(labels), total=total) ]
-        track_table = np.concatenate( track_tables, axis=0 )
+        track_table = np.concatenate( [ tab for tab in track_tables if tab.shape[0] != 0 ], axis=0 ) # handle empty frame
         return track_table, None # track_prop
 
     def add_track_features(self, labels):
