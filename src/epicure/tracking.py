@@ -933,7 +933,10 @@ class Tracking(QWidget):
 
     def label_to_dataframe( self, labimg, frame ):
         """ from label, get dataframe of centroids with properties """
-        df = pd.DataFrame( ut.labels_table(labimg, properties=self.region_properties))
+        df = pd.DataFrame( ut.labels_table(labimg, properties=self.region_properties) )
+        if df.shape[0] == 0:
+            ## no labels in this frame
+            return None
         df["frame"] = frame
         return df
     
@@ -952,8 +955,9 @@ class Tracking(QWidget):
     def labels_to_centroids( self, start_frame, end_frame ):
         """ Get centroids of each cell in dataframe """
         regionprops = [
-            self.label_to_dataframe(self.epicure.seg[frame], frame)
+            result
             for frame in range(start_frame, end_frame + 1)
+            if (result := self.label_to_dataframe(self.epicure.seg[frame], frame)) is not None
         ]
         return pd.concat(regionprops)
     
@@ -1036,6 +1040,7 @@ class Tracking(QWidget):
 
     def after_tracking( self, track_df, split_df, merge_df, progress_bar, indprogress ):
         """ Steps after tracking: get/show the graph from the track_df """
+        track_df["frame"] = track_df["frame_y"]
         graph = None
         progress_bar.set_description( "Update labels and tracks" )
         ## shift all by 1 so that doesn't start at 0
