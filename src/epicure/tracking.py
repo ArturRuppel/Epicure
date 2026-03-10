@@ -1040,7 +1040,8 @@ class Tracking(QWidget):
 
     def after_tracking( self, track_df, split_df, merge_df, progress_bar, indprogress ):
         """ Steps after tracking: get/show the graph from the track_df """
-        track_df["frame"] = track_df["frame_y"]
+        if "frame_y" in track_df.keys():
+            track_df["frame"] = track_df["frame_y"]
         graph = None
         progress_bar.set_description( "Update labels and tracks" )
         ## shift all by 1 so that doesn't start at 0
