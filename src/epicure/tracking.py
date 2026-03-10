@@ -750,10 +750,11 @@ class Tracking(QWidget):
     def remove_ids_from_graph( self, track_ids ):
         """ Remove all ids from the graph """
         track_ids_set = set( track_ids )
-        self.graph = {
-            key: vals for key, vals in self.graph.items()
-            if (key not in track_ids_set) and ( not any( val in track_ids_set for val in (vals if isinstance(vals, list) else [vals])) )
-        }
+        if self.graph is not None:
+            self.graph = {
+                key: vals for key, vals in self.graph.items()
+                if (key not in track_ids_set) and ( not any( val in track_ids_set for val in (vals if isinstance(vals, list) else [vals])) )
+            }
     
     def is_single_parent( self, cur_id ):
         """ Return if the current id is in the graph (as a single parent, not a merge) """
