@@ -26,7 +26,7 @@ Each track correspond to one label (color).
 You can navigate through the movie to find segmentation errors, or use the automatic function to highlight potential errors.
 
 For this, go the the `Inspect` tab of the right panel.
-In `Track options`, select `Flag track merging`, `Flag track appartion` and `Flag track disparition`.
+In `Track options`, select `Flag track merging`, `Flag track apparition` and `Flag track disparition`.
 Select `Ignore cells on: tissue boundaries` at the top of the panel to avoid the border effect and don't check track apparition or disparition for cells at the border. 
 
 ![Inspect interface](./imgs/tuto_inspect.png)
