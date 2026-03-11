@@ -29,7 +29,7 @@ dependencies = [
 	"bioio-bioformats",
 	"bioio-tifffile",
     "scikit-image",
-    "opencv_python_headless",
+    "opencv_python_headless<4.9.0",
     "roifile",
     "pyqtwebengine",
     "magicgui",
