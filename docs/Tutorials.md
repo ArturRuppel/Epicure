@@ -237,4 +237,21 @@ Do the same to link the cell again from frame 3 to frame 4 (press <kbd>t</kbd> t
 Go to `Track` panel and click on `Update tracks display` to update the `Tracks` layer with the changes made in this correction step.
 Remove the corresponding suspects if some are left (should be automatically removed) by pressing <kbd>Control+Alt</kbd> and doing a right click on the suspect point. 
 
+The suspect that is left is another two cells that were also wrongly merged as one cell at frame 3.
+Do the same correction steps (splitting the cell, then correcting the linking) to correct it.
+
+#### C2c - Correct wrongly splitted cell by merging
+
+The very small cell at frame 3 that we unliked at the previous step seems to be part of the cell above it, wrongly splitted in two cells when looking at the movie.
+
+To correct that, press <Control> and at the same time click with the left mouse button from the small cell to its main cell to merge these two cells as one.
+The track should be automatically reconstructed: check that the new merged cell has the correct label at the current frame and at the previous and next frames.
+
+### C3 - Export the skeleton
+In this tutorial, the goal was to correct the skeleton of the movie.
+For this, you can display it in Epicure by pressing <kbd>k</kbd> and you can save the `Skeleton` layer that will be added, or directly export it through the `Output` panel.
+
+Go to `Output` panel, select `Export segmentations` and in that panel, choose `skeleton` in the parameter `Save segmentation as`.
+Check that `Apply on` is set on `All cells` or set it otherwise.
+This parameter is useful if you want to export only some cell segmentation (one cell, or a group of cell). 
 
