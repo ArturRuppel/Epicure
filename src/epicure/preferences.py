@@ -64,7 +64,7 @@ class Preferences():
         print("Running on "+platform.lower())
         
         self.ctl = "Control"
-        #self.alt = "Alt"
+        self.alt = "Alt"
         if platform.lower() == "darwin":
             self.ctl = "Command"
 
@@ -256,7 +256,6 @@ class ShortCut( QWidget ):
         
         layout = QVBoxLayout()
         self.ctl = "Control"
-        #self.alt = "Alt"
         if platform.lower() == "darwin":
             self.ctl = "Command"
 
@@ -304,6 +303,7 @@ class ShortCut( QWidget ):
                         cur_modif.addItem("Alt")
                         if platform.lower() == "darwin":
                             cur_modif.addItem("Command")
+                            cur_modif.addItem("Option")
                         new_line.addWidget( cur_modif )
                         cur_modif.setCurrentText( modif )
                         self.sc_guis[sc_type][ shortname+"modifiers"+str(ind) ] = cur_modif

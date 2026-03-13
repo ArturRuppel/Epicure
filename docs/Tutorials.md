@@ -48,7 +48,7 @@ You can see that the cell present at frame 4 is wrongly splitted in two cells at
 
 ![Correct steps](./imgs/tuto_import_correction.png)
 
-To correct this, at frame 5, press <kbd>Control</kbd> and click with the left mouse button from the first to the second cell to merge together.
+To correct this, at frame 5, press <kbd>Control</kbd> (<kbd>Command</kbd> on MacOS) and click with the left mouse button from the first to the second cell to merge together.
 The two cells will be merged as one cell, labelled with the previous cell (from frame 4) number as the program tries to automatically relink the cells.
 
 It will also try to relink the cells in the next frame.
@@ -56,7 +56,7 @@ Here, you can see that it didn't work and the next frame cell is not linked to t
 To correct, that press <kbd>t</kbd> and do a left click on the cell at frame 5 then a right click on the same cell at frame 6 to link them together.
 
 The error has been corrected.
-You can remove the flags by pressing <kbd>Control+Alt</kbd> and right clicking on the cross if you want to clean it while correcting, otherwise you can do all the corrections then inspect again to reset them all and check that all is fine.
+You can remove the flags by pressing <kbd>Control+Alt</kbd> (<kbd>Command+Option</kbd> on MacOS) and right clicking on the cross if you want to clean it while correcting, otherwise you can do all the corrections then inspect again to reset them all and check that all is fine.
 
 ## B - Segment, track and measure a tissue
 
@@ -71,6 +71,8 @@ At the top of the parameter interface at the right side of the napari window, ch
 Browse to select the file that you downloaded.
 
 Click `Segment now with EpySeg` to segment it.
+The segmentation takes few minutes if you have a GPU, longer otherwise.
+
 !!! warning "Missing dependency"
     To limit EpiCure dependency on other modules, especially Epyseg that is not compatible with recent versions of python, we don't force the installation of `napari-epyseg` with Epicure. If you haven't installed it, you will get an error when trying to use it. In that case, install it (`pip install napari-epyseg`) and start again.
 
@@ -84,7 +86,8 @@ Click `START CURE` to start the process.
 
 EpiCure creates cells from the binary segmentation results from EpySeg. 
 
-Press <kbd>Control-C</kbd> two times to display the cells as contours only, and not full colored cell, to see better the signal behind. 
+Press <kbd>Control-C</kbd> (<kbd>Command-C</kbd> on MacOS) two times to display the cells as contours only, and not full colored cell, to see better the signal behind. 
+Note that if you press <kbd>Control-D</kbd> (<kbd>Command-D</kbd> on MacOS), you can decrease the cell contour size and get back to the fully colored cell when the contour reaches 0. 
 
 !!! note "The `Segmentation` layer must always be selected in the left panel for the shortcuts to work"
 
@@ -219,7 +222,7 @@ Press <kbd>Space</kbd> to navigate through these suspects point: the program wil
 
 If you check the two first suspects, you can see that they are raised by the same segmentation error that is the wrong segmentation of two cells (at frame 2 and 4) as one cell at frame 3.
 
-To split the cell in two, go to frame 3, press <kbd>Alt</kbd> and by keeping the right button of the mouse clicked, draw the separation line between the two cells.
+To split the cell in two, go to frame 3, press <kbd>Alt</kbd> (<kbd>Option</kbd> on MacOS) and by keeping the right button of the mouse clicked, draw the separation line between the two cells.
 When you release the mouse button, two cells should apear. 
 
 The central cell should have been correctly relinked with the cell before and after.
@@ -235,7 +238,7 @@ Do the same to link the cell again from frame 3 to frame 4 (press <kbd>t</kbd> t
 ![Correct split](./imgs/tuto_corr_sone.png)
 
 Go to `Track` panel and click on `Update tracks display` to update the `Tracks` layer with the changes made in this correction step.
-Remove the corresponding suspects if some are left (should be automatically removed) by pressing <kbd>Control+Alt</kbd> and doing a right click on the suspect point. 
+Remove the corresponding suspects if some are left (should be automatically removed) by pressing <kbd>Control+Alt</kbd> (<kbd>Command+Option</kbd> on MacOS) and doing a right click on the suspect point. 
 
 The suspect that is left is another two cells that were also wrongly merged as one cell at frame 3.
 Do the same correction steps (splitting the cell, then correcting the linking) to correct it.
@@ -244,7 +247,7 @@ Do the same correction steps (splitting the cell, then correcting the linking) t
 
 The very small cell at frame 3 that we unliked at the previous step seems to be part of the cell above it, wrongly splitted in two cells when looking at the movie.
 
-To correct that, press <Control> and at the same time click with the left mouse button from the small cell to its main cell to merge these two cells as one.
+To correct that, press <kbd>Control</kbd>> (<kbd>Command</kbd> on MacOS) and at the same time click with the left mouse button from the small cell to its main cell to merge these two cells as one.
 The track should be automatically reconstructed: check that the new merged cell has the correct label at the current frame and at the previous and next frames.
 
 ### C3 - Export the skeleton

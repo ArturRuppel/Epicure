@@ -164,9 +164,14 @@ def napari_shortcuts():
     """ Write main napari shortcuts list """
     text = "---- Main napari default shortcuts ----\n"
     text += " -- view options \n"
-    text += "  <Ctrl+R> reset view \n"
-    text += "  <Ctrl+Y> switch 2D/3D view mode \n"
-    text += "  <Ctrl+G> switch Grid/Overlay view mode \n"
+    if is_darwin():
+        text += "  <Command+R> reset view \n"
+        text += "  <Command+Y> switch 2D/3D view mode \n"
+        text += "  <Command+G> switch Grid/Overlay view mode \n"
+    else:
+        text += "  <Ctrl+R> reset view \n"
+        text += "  <Ctrl+Y> switch 2D/3D view mode \n"
+        text += "  <Ctrl+G> switch Grid/Overlay view mode \n"
     text += "  <left arrow> got to previous frame \n"
     text += "  <right arrow> got to next frame \n"
     text += "\n"
@@ -1179,7 +1184,13 @@ def print_shortcuts( shortcut_group ):
                         else:
                             modif += mod+"-"
                     else:
-                        modif += mod+"-"
+                        if mod == "Alt":
+                            if is_darwin():
+                                modif += "Option"+"-"
+                            else:
+                                modif += mod+"-"
+                        else:
+                            modif += mod+"-"
             text += "  <"+modif+vals["button"]+"-click> "+vals["text"]+"\n"
     return text
 
