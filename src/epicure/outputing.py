@@ -610,7 +610,8 @@ class Outputing(QWidget):
                 frame_table["Neighbors"] = frame_table["neighborlist"].apply(
                 lambda x: "&".join(map(str, x)) if x else ""
                 )
-            frame_table.drop(columns="neighborlist", inplace=True)
+            if do_neighbor or get_neighbor:
+                frame_table.drop(columns="neighborlist", inplace=True)
             return pand.DataFrame( frame_table.to_dict(orient="records") )
 
         if self.epicure.process_parallel:
