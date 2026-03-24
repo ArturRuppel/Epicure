@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 dependencies = [
-    "napari <= 0.6.4",
+    "napari",
     "numpy",
     "qtpy",
 	"bioio",
@@ -42,6 +42,7 @@ dependencies = [
     "packaging",
     "laptrack>=0.15.0",
     "joblib",
+    "appose",
 ]
 
 [project.urls]

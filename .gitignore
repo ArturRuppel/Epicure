@@ -11,6 +11,8 @@ o# OS
 .github/
 
 __pycache__/
+src/epicure/resources/__pycache__/
+src/epicure/__pycache__/
 
 env/
 build/

@@ -7,10 +7,12 @@
 from napari import current_viewer
 from magicgui import magicgui
 from napari.utils.history import get_save_history, update_save_history 
+from napari.utils import progress
 import pathlib
 import epicure.Utils as ut
 from epicure.epicuring import EpiCure
 import multiprocessing
+import logging
 
 
 def start_from_layers():
@@ -156,17 +158,35 @@ def gui_files(movie=None, movie_path="", segmented=None):
 
     def launch_napari_epyseg():
         """ Open napari-epyseg plugin to segment the intensity channel movie """
-        try:
-            import napari_epyseg
-            from napari_epyseg.start_epyseg import run_epyseg
-        except:
-            ut.show_error( "This option requires the plugin napari-epyseg that is missing.\nInstall it and restart" )
-            return
         print("Running EpySeg with default parameters on the movie. To change the settings, use the napari-epyseg plugin outside of EpiCure or EpySeg module directly")
         parameters = {"tile_width":256, "tile_height":256, "overlap_width":32, "overlap_height":32, "model":"epyseg default(v2)", "norm_min":0, "norm_max":1}
-        print(Epic.img.shape)
         ut.show_progress( viewer, True )
-        segres = run_epyseg( Epic.img, parameters, prog=True )
+        progress_bar = progress( len(Epic.img) )
+        progress_bar.set_description( "Running epyseg on all frames..." )
+        progress_bar.update(0)
+        try:
+            from epicure.appose_epyseg import go_epyseg
+            class LogHandler(logging.Handler):
+                def emit(self, record):
+                    msg = self.format(record)
+                    progress_bar.set_description( msg )
+
+            def setup_logger( name="epyseg_seg" ):
+                logger = logging.getLogger(name)
+                handler = LogHandler()
+                formatter = logging.Formatter('[EpiCure] %(message)s')
+                handler.setFormatter( formatter )
+                logger.addHandler(handler)
+                logger.setLevel( logging.INFO )
+                return logger
+
+            logger = setup_logger()
+            segres = go_epyseg( Epic.img, parameters, progress_bar=None, logger=logger )
+            #segres = appose_epyseg.go_epyseg( Epic.img, parameters, progress_bar=progress_bar )
+        except Exception as e:
+            ut.show_error( "This option requires the plugin napari-epyseg that is missing.\nInstall it and restart" )
+            print(e)
+            return
         ut.show_progress( viewer, False )
         segname = str(get_files.image_file.value)+"_epyseg.tif"
         ut.writeTif( segres, segname, 1.0, "uint8", what="Epyseg results saved in " )
