@@ -5,7 +5,7 @@ Depending on your familiarity with python, you can install it in several ways:
 
 * [In a new virtual environment (recommend)](#from-a-virtual-environment-recommended): Usually, each plugin is installed in its own python environment to avoid compatibility issues of its dependencies. Below, we detailled all the installation steps so that anybody could perform this installation.
 
-* [In already installed Napari](#from-napari-interface): if you already have an environement with napari installed (ideally with python 3.9 or 3.10), and are not afraid of compatibility issues, you can directly use it and add EpiCure to it.
+* [In already installed Napari](#from-napari-interface): if you already have an environement with napari installed, and are not afraid of compatibility issues, you can directly use it and add EpiCure to it.
 
 * [In a full graphical way](#with-graphical-interface): if you are unconfortable with the installation of a virtual environment, there is a possibility to do all the installation through graphical interfaces.  
 
@@ -36,10 +36,10 @@ Once you have installed such Python management package, they generally create on
     conda create -n epicurenv python=3.10
 ``` 
 It will install python 3.10 and create an environment called `epicurenv`. 
+Since Epicure 1.5, you can use other versions of python (it was tested on 3.11 and 3.12).
 
-
-!!! warning "Python version"
-    If you wish to use the option to segment the movie with Epyseg, you must use a python version until <= 3.10. Indeed, epyseg is not compatible on more recent versions. By default, we recommend 3.10 so that everything is compatible
+!!! note "Python version"
+	To segment within EpiCure, you can use Epyseg, that is limited to python 3.10 and relies tensorflow. To avoid possible conflict and not limit epicure to python 3.10, EpiCure creates another virtual environement for epyseg thanks to [Appose](https://github.com/apposed/appose). The first time you use this option, it will take more time as it has to install the new environement.
 
 
 ### Step 3: Install EpiCure 
@@ -67,16 +67,9 @@ You can start EpiCure by going in `Plugins>EpiCure>Start Epicure` and follow the
 
 ### Step 1: Napari installation through a graphical interface
 
-Download the bundle version of napari 0.5.4:
+Download the bundle version of napari : [https://napari.org/stable/getting_started/installation.html#installation-bundle-conda](https://napari.org/stable/getting_started/installation.html#installation-bundle-conda)
 
-* [Linux version](https://github.com/napari/napari/releases/download/v0.5.4/napari-0.5.4-Linux-x86_64.sh)
-* [Windows x86](https://github.com/napari/napari/releases/download/v0.5.4/napari-0.5.4-Windows-x86_64.exe)
-
-* [MacOS arm64 (apple chip, from M1 and after)](https://github.com/napari/napari/releases/download/v0.5.4/napari-0.5.4-macOS-arm64.pkg) :fontawesome-solid-triangle-exclamation:
-* [MacOS x86 (Intel chip, before M1)](https://github.com/napari/napari/releases/download/v0.5.4/napari-0.5.4-macOS-x86_64.pkg):fontawesome-solid-triangle-exclamation:
-
-!!! warning "napari bundle doesn't open on MacOS" 
-	On MacOS, the bundle version 0.5.4 might not work (after installation, it doesn't open, see more in [imagesc forum](https://forum.image.sc/t/bundle-napari-0-5-4-on-macos-permission-denied/117259)). In this case, proceed to the "normal" installation, or install the [latest napari bundle](https://napari.org/stable/tutorials/fundamentals/installation_bundle_conda.html#macos-bundle) (without epyseg then). 
+The installation steps are detailled for each OS in the same webpage.
 
 Double-click on the executable.
 It will open an installer program, that you can simply follow step by step.
@@ -85,12 +78,6 @@ When the installation is finished (it takes some time), a shortcut icon should h
 
 ![snapshots installation](./imgs/bundle_installation.png)
 
-All these bundles come from napari github, [release of version 0.5.4](https://github.com/napari/napari/releases/tag/v0.5.4). 
-The installation steps for each OS are described [here](https://napari.org/stable/tutorials/fundamentals/installation_bundle_conda.html).
-
-??? note "Why napari version 0.5.4" 
-	We chose this version as it is the last one in Python 3.9, the following ones are with Python > 3.11, to have all options available (including Epyseg which is limited to version <3.11).
-	You can still download the latest bundle of napari if you wish, and then use the napari console Terminal to fix dependencies install, or not use some options (Epyseg).
 
 ### Step 2: EpiCure installation through a graphical interface
 When the installation is over, double-click on the napari icon and wait for napari window to open (it can take a few minutes). 

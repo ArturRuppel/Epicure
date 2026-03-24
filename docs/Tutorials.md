@@ -73,8 +73,8 @@ Browse to select the file that you downloaded.
 Click `Segment now with EpySeg` to segment it.
 The segmentation takes few minutes if you have a GPU, longer otherwise.
 
-!!! warning "Missing dependency"
-    To limit EpiCure dependency on other modules, especially Epyseg that is not compatible with recent versions of python, we don't force the installation of `napari-epyseg` with Epicure. If you haven't installed it, you will get an error when trying to use it. In that case, install it (`pip install napari-epyseg`) and start again.
+!!! note "First run takes longer to install epyseg environement"
+	To segment within EpiCure, you can use Epyseg, that is limited to python 3.10 and relies tensorflow. To avoid possible conflict and not limit epicure to python 3.10, EpiCure creates another virtual environement for epyseg thanks to [Appose](https://github.com/apposed/appose). The first time you use this option, it will take more time as it has to install the new environement.
 
 When the segmentation is finished, a file named `015.tif_epyseg.tif` has been saved in the same folder as your movie and is directly proposed as the `segmentation file` in EpiCure interface. 
 
