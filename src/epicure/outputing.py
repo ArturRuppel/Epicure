@@ -18,12 +18,16 @@ from epicure.trackmate_export import save_trackmate_xml
 import plotly.express as px
 from qtpy import QtCore
 from qtpy.QtCore import Qt
-QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts, True)  ## for QtWebEngine import to work on some computers
-from qtpy.QtWebEngineWidgets import QWebEngineView 
-from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QGridLayout, QListWidget
+from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QGridLayout, QListWidget, QTextBrowser
 from qtpy.QtWidgets import QAbstractItemView as aiv
 from random import sample
 from joblib import Parallel, delayed
+import webbrowser
+import tempfile
+try:
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts, True)  ## for QtWebEngine import to work on some computers
+except:
+    pass
 
 from skimage.morphology import disk
 try:
@@ -1606,7 +1610,16 @@ class TemporalPlots(QWidget):
                     addfig.update_traces( patch={"line": {"dash":"dot"}} )
                     self.fig.add_trace( addfig.data[0] )
     
-        self.browser.setHtml( self.fig.to_html(include_plotlyjs='cdn'))
+        if self.webengine:
+            self.browser.setHtml( self.fig.to_html(include_plotlyjs='cdn'))
+        else:
+            self.show_plot_in_browser( self.fig.to_html(include_plotlyjs='cdn'))
+        
+    def show_plot_in_browser(self,html):
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+            f.write(html)
+            url = 'file://' + f.name
+            webbrowser.open(url)
 
     def smooth_df( self, df ):
         """ Smooth temporally the dataframe by label or by group """
@@ -1618,7 +1631,7 @@ class TemporalPlots(QWidget):
             feat = feat+"_smooth"
         else:
             self.df[feat+"_smooth"] = self.df[feat].rolling(rollsize, center=True).mean()
-            print(self.df)
+            #print(self.df)
             feat = feat+"_smooth"
 
     def save_plot_image( self ):
@@ -1658,8 +1671,26 @@ class TemporalPlots(QWidget):
 
     def create_plotwidget(self):
         """ Create plot window """
+        try:
+            from qtpy.QtWebEngineWidgets import QWebEngineView 
+            self.webengine = True
+        except:
+            self.webengine = False
+            self.browser = NoEngineViewer()
+            return self.browser
         self.browser = QWebEngineView(self)
         return self.browser
 
-    
-
+class NoEngineViewer(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.text_browser = QTextBrowser()
+        self.text_browser.setHtml("<h2>Plots will be redirected to web browser</h2>" \
+        "" \
+        "Your napari installation is using pyside6 that doesn't have the necessary dependency to show the plot in this window interactively. To have this option, reinstall napari with pyqt5 or pyqt6." \
+        "" \
+        "Otherwise, you can still see the plot, it will open in your web browser, but will be slower to display, reload the web page if nothing appears." \
+        "")
+        layout.addWidget(self.text_browser)
+        self.setLayout(layout)
