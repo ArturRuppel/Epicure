@@ -8,7 +8,6 @@
 import pandas as pand
 import numpy as np
 import roifile
-from skimage.morphology import binary_erosion, disk, binary_dilation
 from skimage.measure import label
 import os, time
 import napari
@@ -25,6 +24,12 @@ from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QTableWidget, QTab
 from qtpy.QtWidgets import QAbstractItemView as aiv
 from random import sample
 from joblib import Parallel, delayed
+
+from skimage.morphology import disk
+try:
+    from skimage.morphology import binary_erosion
+except:
+    from skimage.morphology import erosion as binary_erosion 
     
 
 class Outputing(QWidget):

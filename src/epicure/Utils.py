@@ -14,7 +14,7 @@ from skimage.segmentation import find_boundaries, expand_labels
 from napari.utils.translations import trans # type: ignore
 from napari.utils.notifications import show_info # type: ignore
 from napari.utils import notifications as nt # type: ignore
-from skimage.morphology import skeletonize, binary_dilation, disk, binary_closing 
+from skimage.morphology import skeletonize, disk, binary_closing 
 from scipy.ndimage import center_of_mass, find_objects
 from scipy.ndimage import label as ndlabel
 from scipy.ndimage import binary_opening as ndbinary_opening
@@ -35,6 +35,11 @@ try:
     from skimage.graph import RAG
 except:
     from skimage.future.graph import RAG  ## older version of scikit-image
+
+try:
+    from skimage.morphology import binary_dilation
+except:
+    from skimage.morphology import dilation as binary_dilation
 
 def show_info(message):
     """ Display info in napari """
@@ -202,6 +207,8 @@ def setOverlayText(viewer, text, size=10 ):
     viewer.text_overlay.text = trans._(text)
     viewer.text_overlay.position = "top_left"
     viewer.text_overlay.visible = True
+    if version_napari_above( "0.6.5" ):
+        size = size - 2
     viewer.text_overlay.font_size = size
     viewer.text_overlay.color = "white"
     viewer.text_overlay.opacity = 1
