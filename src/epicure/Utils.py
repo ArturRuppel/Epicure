@@ -192,7 +192,7 @@ def getOverlayText(viewer):
     """ Returns the current overlay text """
     return viewer.text_overlay.text
 
-def setOverlayText(viewer, text, size=8 ):
+def setOverlayText(viewer, text, size=10 ):
     """ 
     Set the overlay text
     :param: viewer: current napari view
