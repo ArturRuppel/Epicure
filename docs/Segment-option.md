@@ -15,7 +15,7 @@ Then `appose` will put the raw movie to segment in a memory shared between the t
 The segmentation will run image by image for the whole movie, on GPU if they are available.
 The resulting segmentation will be accessible to the main EpiCure process through the same shared memory space.
 
-![Epyseg from EpiCure](./imgs/epyseg_apppose.png)
+![Epyseg from EpiCure](imgs/epyseg_apppose.png)
 
 Thanks to that set-up, you only have to click on the button and wait for the segmentation to be finished.
 Note that it will be slower the first time as the environement will be also installed.
