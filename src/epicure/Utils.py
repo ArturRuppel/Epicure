@@ -123,7 +123,10 @@ def extract_names(imagepath, subname="epics", mkdir=True):
             - path to the results directory on which to save all outputs
     """
     imgname = os.path.splitext(os.path.basename(imagepath))[0]
-    imgdir = os.path.dirname(imagepath)
+    if os.path.isdir(imagepath):
+        imgdir = imagepath
+    else:
+        imgdir = os.path.dirname(imagepath)
     resdir = os.path.join(imgdir, subname)
     if (not os.path.exists(resdir)) and mkdir:
         os.makedirs(resdir)
