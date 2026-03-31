@@ -537,7 +537,9 @@ class Inspecting(QWidget):
         if self.event_types.get(feature) is None:
             self.event_types[feature] = []
         self.event_types[feature].append(sid)
-        self.events.properties["score"][ind] = self.events.properties["score"][ind] + 1
+        score = self.events.properties["score"].copy()
+        score[ind] = score[ind] + 1
+        self.events.properties["score"] = score
 
     def first_event(self, pos, label, featurename):
         """ Addition of the first event (initialize all) """
@@ -586,9 +588,11 @@ class Inspecting(QWidget):
             ind = len(self.events.data)
             sid = self.new_event_id()
             self.events.add(pos)
-            self.events.properties["label"][ind] = label
-            self.events.properties["id"][ind] = sid
-            self.events.properties["score"][ind] = 0
+            props = {k: v.copy() for k, v in self.events.properties.items()}
+            props["label"][ind] = label
+            props["id"][ind] = sid
+            props["score"][ind] = 0
+            self.events.properties = props
             self.add_event_type(ind, sid, reason)
 
         self.events.symbol.flags.writeable = True
@@ -772,7 +776,9 @@ class Inspecting(QWidget):
 
     def decrease_score(self, ind):
         """ Decrease by one score of event at index ind. Delete it if reach 0"""
-        self.events.properties["score"][ind] = self.events.properties["score"][ind] - 1
+        score = self.events.properties["score"].copy()
+        score[ind] = score[ind] - 1
+        self.events.properties["score"] = score
         if self.events.properties["score"][ind] == 0:
             self.exonerate_one( ind, remove_division=False )
             self.update_nevents_display()
